@@ -25,6 +25,9 @@ func (t *Thrift) Start(tm *tables.TableManager, host string, port int) error {
 	t.server = thrift.NewTSimpleServer4(processor, socket, transportFactory, protocolFactory)
 	return t.server.Serve()
 }
+func (t *Thrift) Stop() error {
+	return t.server.Stop()
+}
 
 type ThriftProcessor struct {
 	tm *tables.TableManager

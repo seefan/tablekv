@@ -15,3 +15,4 @@
 go_build_main_go
 var/
 log/
+fault.txt

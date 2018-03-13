@@ -12,7 +12,7 @@ type Table struct {
 	isOpen bool
 }
 
-func loadTable(p, name string) (t *Table, err error) {
+func LoadTable(p, name string) (t *Table, err error) {
 	t = &Table{
 		isOpen: false,
 	}
