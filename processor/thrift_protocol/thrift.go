@@ -77,3 +77,9 @@ func (t *ThriftProcessor) Delete(table []byte, key []byte) (err error) {
 		return err
 	}
 }
+
+// Parameters:
+//  - Table
+func (t *ThriftProcessor) TableDelete(table []byte) (err error){
+	return t.tm.DeleteTable(string(table))
+}

@@ -5,4 +5,5 @@ service TableKV{
     void Set(1:binary table,2:binary key,3:binary value)
     bool Exists(1:binary table,2:binary key)
     void Delete(1:binary table,2:binary key)
+    void TableDelete(1:binary table)
 }

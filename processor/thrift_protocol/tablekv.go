@@ -32,6 +32,9 @@ type TableKV interface {
 	//  - Table
 	//  - Key
 	Delete(table []byte, key []byte) (err error)
+	// Parameters:
+	//  - Table
+	TableDelete(table []byte) (err error)
 }
 
 type TableKVClient struct {
@@ -376,6 +379,82 @@ func (p *TableKVClient) recvDelete() (err error) {
 	return
 }
 
+// Parameters:
+//  - Table
+func (p *TableKVClient) TableDelete(table []byte) (err error) {
+	if err = p.sendTableDelete(table); err != nil {
+		return
+	}
+	return p.recvTableDelete()
+}
+
+func (p *TableKVClient) sendTableDelete(table []byte) (err error) {
+	oprot := p.OutputProtocol
+	if oprot == nil {
+		oprot = p.ProtocolFactory.GetProtocol(p.Transport)
+		p.OutputProtocol = oprot
+	}
+	p.SeqId++
+	if err = oprot.WriteMessageBegin("TableDelete", thrift.CALL, p.SeqId); err != nil {
+		return
+	}
+	args := TableKVTableDeleteArgs{
+		Table: table,
+	}
+	if err = args.Write(oprot); err != nil {
+		return
+	}
+	if err = oprot.WriteMessageEnd(); err != nil {
+		return
+	}
+	return oprot.Flush()
+}
+
+func (p *TableKVClient) recvTableDelete() (err error) {
+	iprot := p.InputProtocol
+	if iprot == nil {
+		iprot = p.ProtocolFactory.GetProtocol(p.Transport)
+		p.InputProtocol = iprot
+	}
+	method, mTypeId, seqId, err := iprot.ReadMessageBegin()
+	if err != nil {
+		return
+	}
+	if method != "TableDelete" {
+		err = thrift.NewTApplicationException(thrift.WRONG_METHOD_NAME, "TableDelete failed: wrong method name")
+		return
+	}
+	if p.SeqId != seqId {
+		err = thrift.NewTApplicationException(thrift.BAD_SEQUENCE_ID, "TableDelete failed: out of sequence response")
+		return
+	}
+	if mTypeId == thrift.EXCEPTION {
+		error8 := thrift.NewTApplicationException(thrift.UNKNOWN_APPLICATION_EXCEPTION, "Unknown Exception")
+		var error9 error
+		error9, err = error8.Read(iprot)
+		if err != nil {
+			return
+		}
+		if err = iprot.ReadMessageEnd(); err != nil {
+			return
+		}
+		err = error9
+		return
+	}
+	if mTypeId != thrift.REPLY {
+		err = thrift.NewTApplicationException(thrift.INVALID_MESSAGE_TYPE_EXCEPTION, "TableDelete failed: invalid message type")
+		return
+	}
+	result := TableKVTableDeleteResult{}
+	if err = result.Read(iprot); err != nil {
+		return
+	}
+	if err = iprot.ReadMessageEnd(); err != nil {
+		return
+	}
+	return
+}
+
 type TableKVProcessor struct {
 	processorMap map[string]thrift.TProcessorFunction
 	handler      TableKV
@@ -396,12 +475,13 @@ func (p *TableKVProcessor) ProcessorMap() map[string]thrift.TProcessorFunction {
 
 func NewTableKVProcessor(handler TableKV) *TableKVProcessor {
 
-	self8 := &TableKVProcessor{handler: handler, processorMap: make(map[string]thrift.TProcessorFunction)}
-	self8.processorMap["Get"] = &tableKVProcessorGet{handler: handler}
-	self8.processorMap["Set"] = &tableKVProcessorSet{handler: handler}
-	self8.processorMap["Exists"] = &tableKVProcessorExists{handler: handler}
-	self8.processorMap["Delete"] = &tableKVProcessorDelete{handler: handler}
-	return self8
+	self10 := &TableKVProcessor{handler: handler, processorMap: make(map[string]thrift.TProcessorFunction)}
+	self10.processorMap["Get"] = &tableKVProcessorGet{handler: handler}
+	self10.processorMap["Set"] = &tableKVProcessorSet{handler: handler}
+	self10.processorMap["Exists"] = &tableKVProcessorExists{handler: handler}
+	self10.processorMap["Delete"] = &tableKVProcessorDelete{handler: handler}
+	self10.processorMap["TableDelete"] = &tableKVProcessorTableDelete{handler: handler}
+	return self10
 }
 
 func (p *TableKVProcessor) Process(iprot, oprot thrift.TProtocol) (success bool, err thrift.TException) {
@@ -414,12 +494,12 @@ func (p *TableKVProcessor) Process(iprot, oprot thrift.TProtocol) (success bool,
 	}
 	iprot.Skip(thrift.STRUCT)
 	iprot.ReadMessageEnd()
-	x9 := thrift.NewTApplicationException(thrift.UNKNOWN_METHOD, "Unknown function "+name)
+	x11 := thrift.NewTApplicationException(thrift.UNKNOWN_METHOD, "Unknown function "+name)
 	oprot.WriteMessageBegin(name, thrift.EXCEPTION, seqId)
-	x9.Write(oprot)
+	x11.Write(oprot)
 	oprot.WriteMessageEnd()
 	oprot.Flush()
-	return false, x9
+	return false, x11
 
 }
 
@@ -592,6 +672,51 @@ func (p *tableKVProcessorDelete) Process(seqId int32, iprot, oprot thrift.TProto
 		return true, err2
 	}
 	if err2 = oprot.WriteMessageBegin("Delete", thrift.REPLY, seqId); err2 != nil {
+		err = err2
+	}
+	if err2 = result.Write(oprot); err == nil && err2 != nil {
+		err = err2
+	}
+	if err2 = oprot.WriteMessageEnd(); err == nil && err2 != nil {
+		err = err2
+	}
+	if err2 = oprot.Flush(); err == nil && err2 != nil {
+		err = err2
+	}
+	if err != nil {
+		return
+	}
+	return true, err
+}
+
+type tableKVProcessorTableDelete struct {
+	handler TableKV
+}
+
+func (p *tableKVProcessorTableDelete) Process(seqId int32, iprot, oprot thrift.TProtocol) (success bool, err thrift.TException) {
+	args := TableKVTableDeleteArgs{}
+	if err = args.Read(iprot); err != nil {
+		iprot.ReadMessageEnd()
+		x := thrift.NewTApplicationException(thrift.PROTOCOL_ERROR, err.Error())
+		oprot.WriteMessageBegin("TableDelete", thrift.EXCEPTION, seqId)
+		x.Write(oprot)
+		oprot.WriteMessageEnd()
+		oprot.Flush()
+		return false, err
+	}
+
+	iprot.ReadMessageEnd()
+	result := TableKVTableDeleteResult{}
+	var err2 error
+	if err2 = p.handler.TableDelete(args.Table); err2 != nil {
+		x := thrift.NewTApplicationException(thrift.INTERNAL_ERROR, "Internal error processing TableDelete: "+err2.Error())
+		oprot.WriteMessageBegin("TableDelete", thrift.EXCEPTION, seqId)
+		x.Write(oprot)
+		oprot.WriteMessageEnd()
+		oprot.Flush()
+		return true, err2
+	}
+	if err2 = oprot.WriteMessageBegin("TableDelete", thrift.REPLY, seqId); err2 != nil {
 		err = err2
 	}
 	if err2 = result.Write(oprot); err == nil && err2 != nil {
@@ -1455,4 +1580,148 @@ func (p *TableKVDeleteResult) String() string {
 		return "<nil>"
 	}
 	return fmt.Sprintf("TableKVDeleteResult(%+v)", *p)
+}
+
+// Attributes:
+//  - Table
+type TableKVTableDeleteArgs struct {
+	Table []byte `thrift:"table,1" db:"table" json:"table"`
+}
+
+func NewTableKVTableDeleteArgs() *TableKVTableDeleteArgs {
+	return &TableKVTableDeleteArgs{}
+}
+
+func (p *TableKVTableDeleteArgs) GetTable() []byte {
+	return p.Table
+}
+func (p *TableKVTableDeleteArgs) Read(iprot thrift.TProtocol) error {
+	if _, err := iprot.ReadStructBegin(); err != nil {
+		return thrift.PrependError(fmt.Sprintf("%T read error: ", p), err)
+	}
+
+	for {
+		_, fieldTypeId, fieldId, err := iprot.ReadFieldBegin()
+		if err != nil {
+			return thrift.PrependError(fmt.Sprintf("%T field %d read error: ", p, fieldId), err)
+		}
+		if fieldTypeId == thrift.STOP {
+			break
+		}
+		switch fieldId {
+		case 1:
+			if err := p.ReadField1(iprot); err != nil {
+				return err
+			}
+		default:
+			if err := iprot.Skip(fieldTypeId); err != nil {
+				return err
+			}
+		}
+		if err := iprot.ReadFieldEnd(); err != nil {
+			return err
+		}
+	}
+	if err := iprot.ReadStructEnd(); err != nil {
+		return thrift.PrependError(fmt.Sprintf("%T read struct end error: ", p), err)
+	}
+	return nil
+}
+
+func (p *TableKVTableDeleteArgs) ReadField1(iprot thrift.TProtocol) error {
+	if v, err := iprot.ReadBinary(); err != nil {
+		return thrift.PrependError("error reading field 1: ", err)
+	} else {
+		p.Table = v
+	}
+	return nil
+}
+
+func (p *TableKVTableDeleteArgs) Write(oprot thrift.TProtocol) error {
+	if err := oprot.WriteStructBegin("TableDelete_args"); err != nil {
+		return thrift.PrependError(fmt.Sprintf("%T write struct begin error: ", p), err)
+	}
+	if err := p.writeField1(oprot); err != nil {
+		return err
+	}
+	if err := oprot.WriteFieldStop(); err != nil {
+		return thrift.PrependError("write field stop error: ", err)
+	}
+	if err := oprot.WriteStructEnd(); err != nil {
+		return thrift.PrependError("write struct stop error: ", err)
+	}
+	return nil
+}
+
+func (p *TableKVTableDeleteArgs) writeField1(oprot thrift.TProtocol) (err error) {
+	if err := oprot.WriteFieldBegin("table", thrift.STRING, 1); err != nil {
+		return thrift.PrependError(fmt.Sprintf("%T write field begin error 1:table: ", p), err)
+	}
+	if err := oprot.WriteBinary(p.Table); err != nil {
+		return thrift.PrependError(fmt.Sprintf("%T.table (1) field write error: ", p), err)
+	}
+	if err := oprot.WriteFieldEnd(); err != nil {
+		return thrift.PrependError(fmt.Sprintf("%T write field end error 1:table: ", p), err)
+	}
+	return err
+}
+
+func (p *TableKVTableDeleteArgs) String() string {
+	if p == nil {
+		return "<nil>"
+	}
+	return fmt.Sprintf("TableKVTableDeleteArgs(%+v)", *p)
+}
+
+type TableKVTableDeleteResult struct {
+}
+
+func NewTableKVTableDeleteResult() *TableKVTableDeleteResult {
+	return &TableKVTableDeleteResult{}
+}
+
+func (p *TableKVTableDeleteResult) Read(iprot thrift.TProtocol) error {
+	if _, err := iprot.ReadStructBegin(); err != nil {
+		return thrift.PrependError(fmt.Sprintf("%T read error: ", p), err)
+	}
+
+	for {
+		_, fieldTypeId, fieldId, err := iprot.ReadFieldBegin()
+		if err != nil {
+			return thrift.PrependError(fmt.Sprintf("%T field %d read error: ", p, fieldId), err)
+		}
+		if fieldTypeId == thrift.STOP {
+			break
+		}
+		if err := iprot.Skip(fieldTypeId); err != nil {
+			return err
+		}
+		if err := iprot.ReadFieldEnd(); err != nil {
+			return err
+		}
+	}
+	if err := iprot.ReadStructEnd(); err != nil {
+		return thrift.PrependError(fmt.Sprintf("%T read struct end error: ", p), err)
+	}
+	return nil
+}
+
+func (p *TableKVTableDeleteResult) Write(oprot thrift.TProtocol) error {
+	if err := oprot.WriteStructBegin("TableDelete_result"); err != nil {
+		return thrift.PrependError(fmt.Sprintf("%T write struct begin error: ", p), err)
+	}
+	if err := oprot.WriteFieldStop(); err != nil {
+		return thrift.PrependError("write field stop error: ", err)
+	}
+	if err := oprot.WriteStructEnd(); err != nil {
+		return thrift.PrependError("write struct stop error: ", err)
+	}
+	return nil
+}
+
+func (p *TableKVTableDeleteResult) String() string {
+	if p == nil {
+		return "<nil>"
+	}
+	return fmt.Sprintf("TableKVTableDeleteResult(%+v)", *p)
 }

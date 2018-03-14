@@ -3,6 +3,9 @@ package tables
 import (
 	"sync"
 	log "github.com/cihub/seelog"
+	"path"
+	"os"
+	"github.com/seefan/tablekv/common"
 )
 
 type TableManager struct {
@@ -11,7 +14,7 @@ type TableManager struct {
 	path          string
 	NewTableEvent func(name string)
 }
-
+//close all table
 func (t *TableManager) Close() (err error) {
 	for _, tb := range t.tableManager {
 		if err = tb.Close(); err != nil {
@@ -20,6 +23,7 @@ func (t *TableManager) Close() (err error) {
 	}
 	return
 }
+//get a table
 func (t *TableManager) GetTable(name string) (table *Table, err error) {
 	t.lock.Lock()
 	defer t.lock.Unlock()
@@ -38,6 +42,25 @@ func (t *TableManager) GetTable(name string) (table *Table, err error) {
 
 	return
 }
+//delete a table
+func (t *TableManager) DeleteTable(name string) (err error) {
+	t.lock.Lock()
+	defer t.lock.Unlock()
+	table, ok := t.tableManager[name]
+	//delete dir
+
+	if ok {
+		err = table.Close()
+		delete(t.tableManager, name)
+	}
+	dir := path.Join(t.path, name)
+	if err == nil && !common.FileIsNotExist(dir) {
+		err = os.RemoveAll(dir)
+	}
+	return
+}
+//create new table manager
+
 func NewTableManager(path string, tables []string) (t *TableManager) {
 	t = &TableManager{
 		tableManager: make(map[string]*Table),
