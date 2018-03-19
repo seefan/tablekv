@@ -60,7 +60,6 @@ func (t *TableManager) DeleteTable(name string) (err error) {
 	return
 }
 //create new table manager
-
 func NewTableManager(path string, tables []string) (t *TableManager) {
 	t = &TableManager{
 		tableManager: make(map[string]*Table),
