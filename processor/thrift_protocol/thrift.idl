@@ -1,9 +1,0 @@
-namespace go thrift_protocol
-namespace java net.seefan.table_kv
-service TableKV{
-    binary Get(1:binary table,2:binary key)
-    void Set(1:binary table,2:binary key,3:binary value)
-    bool Exists(1:binary table,2:binary key)
-    void Delete(1:binary table,2:binary key)
-    void TableDelete(1:binary table)
-}
