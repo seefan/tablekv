@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"git.apache.org/thrift.git/lib/go/thrift"
 	"context"
-	"time"
 	"github.com/seefan/tablekv/common"
 )
 
@@ -13,7 +12,7 @@ type Thrift struct {
 }
 
 func (t *Thrift) Start(pm common.GetProcessor, host string, port int) error {
-	socket, err := thrift.NewTServerSocketTimeout(fmt.Sprintf("%s:%d", host, port), time.Duration(30)*time.Second)
+	socket, err := thrift.NewTServerSocket(fmt.Sprintf("%s:%d", host, port))
 	if err != nil {
 		return err
 	}

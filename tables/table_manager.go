@@ -9,6 +9,8 @@ import (
 	"time"
 )
 
+const TimeFormat = "2006-01-02 15:04:05"
+
 type TableManager struct {
 	tableMap   map[string]*Table
 	lock       sync.RWMutex
@@ -16,7 +18,6 @@ type TableManager struct {
 	conf       *common.Config
 	TableEvent func(name string, eventType byte)
 	timer      *time.Ticker
-	timeout    float64
 }
 
 //close all table
@@ -38,7 +39,7 @@ func (t *TableManager) GetTable(name string) (table *Table, err error) {
 	defer t.lock.Unlock()
 	table, ok := t.tableMap[name]
 	if !ok {
-		if table, err = LoadTable(t.path, name); err != nil {
+		if table, err = LoadTable(t.path, common.HashString(name)); err != nil {
 			return nil, err
 		} else {
 			t.tableMap[name] = table
@@ -57,15 +58,14 @@ func (t *TableManager) DeleteTable(name string) (err error) {
 	defer t.lock.Unlock()
 	table, ok := t.tableMap[name]
 	//delete dir
-	log.Debugf("delete table %s", name)
+	log.Debugf("delete table %s # %s", name, table.lastUpdate.Format(TimeFormat))
 
 	if ok {
 		err = table.Close()
 		delete(t.tableMap, name)
 	}
-	dir := path.Join(t.path, name)
-	if err == nil && !common.FileIsNotExist(dir) {
-		err = os.RemoveAll(dir)
+	if err == nil && !common.FileIsNotExist(table.path) {
+		err = os.RemoveAll(table.path)
 	}
 	if err == nil && t.TableEvent != nil {
 		t.TableEvent(name, 1) //delete table is 1
@@ -74,40 +74,31 @@ func (t *TableManager) DeleteTable(name string) (err error) {
 }
 
 //create new table manager
-func NewTableManager(cfg *common.Config, tables []string) (t *TableManager) {
+func NewTableManager(cfg *common.Config, tables []*TableInfo) (t *TableManager) {
 	t = &TableManager{
 		tableMap: make(map[string]*Table),
 		conf:     cfg,
 		path:     path.Join(cfg.VarPath, "tables"),
-		timer:    time.NewTicker(time.Hour),
+		timer:    time.NewTicker(time.Minute),
 	}
-	if common.FileIsNotExist(t.path){
-		os.MkdirAll(t.path,0764)
+	if common.FileIsNotExist(t.path) {
+		os.MkdirAll(t.path, 0764)
 	}
 	go t.timeProcessor()
 	if tables == nil {
 		return
 	}
-	for _, name := range tables {
-		log.Debugf("load table %s", name)
-		if _, ok := t.tableMap[name]; !ok {
-			if table, err := LoadTable(t.path, name); err == nil {
-				t.tableMap[name] = table
+	for _, tb := range tables {
+
+		if _, ok := t.tableMap[tb.Name]; !ok {
+			if table, err := LoadTable(t.path, common.HashString(tb.Name)); err == nil {
+				table.lastUpdate = tb.LastUpdate
+				t.tableMap[tb.Name] = table
+				log.Debugf("load table %s # %s", tb.Name,tb.LastUpdate.Format(TimeFormat))
 			} else {
-				log.Errorf("load table %s error", name, err)
+				log.Errorf("load table %s error", tb.Name, err)
 			}
 		}
-	}
-	switch cfg.TimeoutType {
-	case 0:
-		t.timeout = float64(cfg.Timeout)
-	case 1:
-		t.timeout = float64(cfg.Timeout * 24)
-	default:
-		t.timeout = 1
-	}
-	if t.timeout < 1 {
-		t.timeout = 1
 	}
 	return
 }

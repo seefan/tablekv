@@ -431,7 +431,8 @@ func (p *TableKVGetArgs) Read(iprot thrift.TProtocol) error {
     if err != nil {
       return thrift.PrependError(fmt.Sprintf("%T field %d read error: ", p, fieldId), err)
     }
-    if fieldTypeId == thrift.STOP { break; }
+    if fieldTypeId == thrift.STOP { break
+    }
     switch fieldId {
     case 1:
       if fieldTypeId == thrift.STRING {
@@ -527,7 +528,8 @@ func (p *TableKVGetResult) Read(iprot thrift.TProtocol) error {
     if err != nil {
       return thrift.PrependError(fmt.Sprintf("%T field %d read error: ", p, fieldId), err)
     }
-    if fieldTypeId == thrift.STOP { break; }
+    if fieldTypeId == thrift.STOP { break
+    }
     switch fieldId {
     case 0:
       if fieldTypeId == thrift.STRING {
@@ -626,7 +628,8 @@ func (p *TableKVSetArgs) Read(iprot thrift.TProtocol) error {
     if err != nil {
       return thrift.PrependError(fmt.Sprintf("%T field %d read error: ", p, fieldId), err)
     }
-    if fieldTypeId == thrift.STOP { break; }
+    if fieldTypeId == thrift.STOP { break
+    }
     switch fieldId {
     case 1:
       if fieldTypeId == thrift.STRING {
@@ -740,7 +743,8 @@ func (p *TableKVSetResult) Read(iprot thrift.TProtocol) error {
     if err != nil {
       return thrift.PrependError(fmt.Sprintf("%T field %d read error: ", p, fieldId), err)
     }
-    if fieldTypeId == thrift.STOP { break; }
+    if fieldTypeId == thrift.STOP { break
+    }
     if err := iprot.Skip(fieldTypeId); err != nil {
       return err
     }
@@ -798,7 +802,8 @@ func (p *TableKVExistsArgs) Read(iprot thrift.TProtocol) error {
     if err != nil {
       return thrift.PrependError(fmt.Sprintf("%T field %d read error: ", p, fieldId), err)
     }
-    if fieldTypeId == thrift.STOP { break; }
+    if fieldTypeId == thrift.STOP { break
+    }
     switch fieldId {
     case 1:
       if fieldTypeId == thrift.STRING {
@@ -896,7 +901,8 @@ func (p *TableKVExistsResult) Read(iprot thrift.TProtocol) error {
     if err != nil {
       return thrift.PrependError(fmt.Sprintf("%T field %d read error: ", p, fieldId), err)
     }
-    if fieldTypeId == thrift.STOP { break; }
+    if fieldTypeId == thrift.STOP { break
+    }
     switch fieldId {
     case 0:
       if fieldTypeId == thrift.BOOL {
@@ -989,7 +995,8 @@ func (p *TableKVDeleteArgs) Read(iprot thrift.TProtocol) error {
     if err != nil {
       return thrift.PrependError(fmt.Sprintf("%T field %d read error: ", p, fieldId), err)
     }
-    if fieldTypeId == thrift.STOP { break; }
+    if fieldTypeId == thrift.STOP { break
+    }
     switch fieldId {
     case 1:
       if fieldTypeId == thrift.STRING {
@@ -1073,7 +1080,8 @@ func (p *TableKVDeleteResult) Read(iprot thrift.TProtocol) error {
     if err != nil {
       return thrift.PrependError(fmt.Sprintf("%T field %d read error: ", p, fieldId), err)
     }
-    if fieldTypeId == thrift.STOP { break; }
+    if fieldTypeId == thrift.STOP { break
+    }
     if err := iprot.Skip(fieldTypeId); err != nil {
       return err
     }
@@ -1137,7 +1145,8 @@ func (p *TableKVBatchSetArgs) Read(iprot thrift.TProtocol) error {
     if err != nil {
       return thrift.PrependError(fmt.Sprintf("%T field %d read error: ", p, fieldId), err)
     }
-    if fieldTypeId == thrift.STOP { break; }
+    if fieldTypeId == thrift.STOP { break
+    }
     switch fieldId {
     case 1:
       if fieldTypeId == thrift.LIST {
@@ -1293,7 +1302,8 @@ func (p *TableKVBatchSetResult) Read(iprot thrift.TProtocol) error {
     if err != nil {
       return thrift.PrependError(fmt.Sprintf("%T field %d read error: ", p, fieldId), err)
     }
-    if fieldTypeId == thrift.STOP { break; }
+    if fieldTypeId == thrift.STOP { break
+    }
     if err := iprot.Skip(fieldTypeId); err != nil {
       return err
     }

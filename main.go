@@ -1,8 +1,6 @@
 package main
 
 import (
-	"github.com/go-ini/ini"
-	"flag"
 	"github.com/seefan/tablekv/common"
 	"github.com/cihub/seelog"
 	"path"
@@ -13,28 +11,12 @@ import (
 	"github.com/seefan/tablekv/protocol/thrift_protocol"
 	"syscall"
 	"os/signal"
-	"github.com/gpmgo/gopm/modules/log"
-	"strings"
+	"github.com/seefan/tablekv/boot"
 )
 
 func main() {
 	defer common.PrintErr()
-	//load config file
-	confPath := flag.String("config", "./conf.ini", "conf.ini path")
-	cfg := new(common.Config)
-	if file, err := ini.Load(confPath); err == nil {
-		cfg.Load(file)
-	} else {
-		cfg.Load(nil)
-	}
-	//create log  directory
-	if common.FileIsNotExist(cfg.LogPath) {
-		os.MkdirAll(cfg.LogPath, 0764)
-	}
-	//create data  directory
-	if common.FileIsNotExist(cfg.VarPath) {
-		os.MkdirAll(cfg.VarPath, 0764)
-	}
+	cfg := boot.LoadConfig()
 	//init log config and log file
 	common.InitLog(path.Join(cfg.LogPath, "log.xml"), path.Join(cfg.LogPath, "tk.log"))
 	defer seelog.Flush()
@@ -47,14 +29,12 @@ func main() {
 	}
 	seelog.Debug("clusterDB loaded")
 	//start table manager and load table
-	var tbns []string
-	if tbs, err := db.GetLocalTables(); err == nil {
-		for _, tb := range tbs {
-			tbns = append(tbns, tb.Name)
-		}
+
+	tbs, err := db.GetLocalTables()
+	if err != nil {
+		seelog.Errorf("load local table error")
 	}
-	log.Debug("Table loaded", strings.Join(tbns, ","))
-	tm := tables.NewTableManager(cfg, tbns)
+	tm := tables.NewTableManager(cfg, tbs)
 	tm.TableEvent = func(name string, eventType byte) {
 		if eventType == 0 {
 			if err := db.SetTable(name); err != nil {
