@@ -3,6 +3,8 @@ package tables
 import (
 	"time"
 	"github.com/seefan/tablekv/common"
+	log "github.com/cihub/seelog"
+	"bytes"
 )
 
 //Regularly scan the table to remove expired tables
@@ -19,6 +21,18 @@ func (t *TableManager) timeProcessor() {
 			for _, k := range ts {
 				t.DeleteTable(k)
 			}
+		}
+		log.Debugf("online table count is %d,running time is %s.", len(t.tableMap), time.Since(t.now).String())
+		for name, tb := range t.tableMap {
+			log.Debugf("%s info", name)
+			var bs bytes.Buffer
+			for k, v := range tb.Info() {
+				bs.WriteString(k)
+				bs.WriteString(":\t\t\t")
+				bs.WriteString(v)
+				bs.WriteRune('\n')
+			}
+			log.Debugf(bs.String())
 		}
 	}
 }

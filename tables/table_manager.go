@@ -18,6 +18,7 @@ type TableManager struct {
 	conf       *common.Config
 	TableEvent func(name string, eventType byte)
 	timer      *time.Ticker
+	now        time.Time
 }
 
 //close all table
@@ -80,6 +81,7 @@ func NewTableManager(cfg *common.Config, tables []*TableInfo) (t *TableManager) 
 		conf:     cfg,
 		path:     path.Join(cfg.VarPath, "tables"),
 		timer:    time.NewTicker(time.Minute),
+		now:      time.Now(),
 	}
 	if common.FileIsNotExist(t.path) {
 		os.MkdirAll(t.path, 0764)
@@ -94,7 +96,7 @@ func NewTableManager(cfg *common.Config, tables []*TableInfo) (t *TableManager) 
 			if table, err := LoadTable(t.path, common.HashString(tb.Name)); err == nil {
 				table.lastUpdate = tb.LastUpdate
 				t.tableMap[tb.Name] = table
-				log.Debugf("load table %s # %s", tb.Name,tb.LastUpdate.Format(TimeFormat))
+				log.Debugf("load table %s # %s", tb.Name, tb.LastUpdate.Format(TimeFormat))
 			} else {
 				log.Errorf("load table %s error", tb.Name, err)
 			}

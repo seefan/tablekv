@@ -122,3 +122,38 @@ func (t *Table) BatchDelete(keys [][]byte) error {
 	}
 	return t.db.Write(bat, nil)
 }
+
+//get table info
+//leveldb.num-files-at-level{n}
+//Returns the number of files at level 'n'.
+//leveldb.stats
+//Returns statistics of the underlying DB.
+//leveldb.iostats
+//Returns statistics of effective disk read and write.
+//leveldb.writedelay
+//Returns cumulative write delay caused by compaction.
+//leveldb.sstables
+//Returns sstables list for each level.
+//leveldb.blockpool
+//Returns block pool stats.
+//leveldb.cachedblock
+//Returns size of cached block.
+//leveldb.openedtables
+//Returns number of opened tables.
+//leveldb.alivesnaps
+//Returns number of alive snapshots.
+//leveldb.aliveiters
+//Returns number of alive iterators.
+func (t *Table) Info() map[string]string {
+	re := make(map[string]string)
+	re["leveldb.stats"], _ = t.db.GetProperty("leveldb.stats")
+	re["leveldb.iostats"], _ = t.db.GetProperty("leveldb.iostats")
+	//re["leveldb.writedelay"], _ = t.db.GetProperty("leveldb.writedelay")
+	//re["leveldb.sstables"], _ = t.db.GetProperty("leveldb.sstables")
+	//re["leveldb.blockpool"], _ = t.db.GetProperty("leveldb.blockpool")
+	re["leveldb.cachedblock"], _ = t.db.GetProperty("leveldb.cachedblock")
+	//re["leveldb.openedtables"], _ = t.db.GetProperty("leveldb.openedtables")
+	//re["leveldb.alivesnaps"], _ = t.db.GetProperty("leveldb.alivesnaps")
+	//re["leveldb.aliveiters"], _ = t.db.GetProperty("leveldb.aliveiters")
+	return re
+}

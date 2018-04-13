@@ -13,7 +13,6 @@ func (b *Boot) LoadConfig(confPath string) *common.Config {
 	if file, err := ini.Load(confPath); err == nil {
 		cfg.Load(file)
 	} else {
-		println(err.Error())
 		cfg.Load(nil)
 	}
 	common.WriteBuffer = cfg.WriteBuffer
