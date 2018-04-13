@@ -8,6 +8,7 @@ TableKV 基于leveldb，实现了分区的KV库，网络协议采用聚合方式
 * 支持分区的关闭和快速删除。
 * 支持分区的自动创建。
 * 支持多协议接入，已支持thrift。
+* 支持分区按小时和天进行过期。
 
 ### 未来支持功能:
 * 支持分布式
@@ -23,6 +24,7 @@ Source: there is a project that has a lot of data input and deletion every day, 
 * supports partition closure and quick deletion.
 * supports automatic creation of partitions.
 * support multi-protocol access, has been supported thrift.
+* Supports partition expiration by hour and day.
 
 ### Future support:
 * support for distributed
