@@ -1,13 +1,14 @@
 package common
 
 import (
-"fmt"
-log "github.com/cihub/seelog"
-"io/ioutil"
-"os"
-"path/filepath"
-"runtime"
-"strings"
+	"fmt"
+	log "github.com/cihub/seelog"
+	"io/ioutil"
+	"os"
+	"path/filepath"
+	"runtime"
+	"strings"
+	"syscall"
 )
 
 var (
@@ -45,7 +46,16 @@ func PrintErr() {
 				str += fmt.Sprintf("frame %v:[func:%v,file:%v,line:%v]\n", i, runtime.FuncForPC(funcName).Name(), file, line)
 			}
 		}
+		logFile, err := os.OpenFile(path, os.O_CREATE|os.O_APPEND|os.O_RDWR, 0660)
+		if err != nil {
+			println(err.Error())
+			return
+		}
+		defer logFile.Close()
 		println(str)
-		ioutil.WriteFile(path, []byte(str), 0764)
+		logFile.WriteString(str)
+		if runtime.GOOS == "linux" {
+			syscall.Dup2(int(logFile.Fd()), int(os.Stderr.Fd()))
+		}
 	}
 }

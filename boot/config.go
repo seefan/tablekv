@@ -1,17 +1,16 @@
 package boot
 
 import (
-	"flag"
 	"github.com/go-ini/ini"
 	"os"
 	"github.com/seefan/tablekv/common"
 )
 
-func LoadConfig() *common.Config {
+func (b *Boot) LoadConfig(confPath string) *common.Config {
 	//load config file
-	confPath := flag.String("config", "./conf.ini", "conf.ini path")
+	//confPath := flag.String("config", "./conf.ini", "conf.ini path")
 	cfg := new(common.Config)
-	if file, err := ini.Load(*confPath); err == nil {
+	if file, err := ini.Load(confPath); err == nil {
 		cfg.Load(file)
 	} else {
 		println(err.Error())
@@ -38,5 +37,6 @@ func LoadConfig() *common.Config {
 	if common.FileIsNotExist(cfg.VarPath) {
 		os.MkdirAll(cfg.VarPath, 0764)
 	}
+	b.cfg = cfg
 	return cfg
 }
