@@ -11,7 +11,7 @@ import (
 
 const (
 	TimeFormat  = "2006-01-02 15:04:05"
-	NewTable    = 0
+	SetTable    = 0
 	DeleteTable = 1
 )
 
@@ -20,7 +20,7 @@ type TableManager struct {
 	lock       sync.RWMutex
 	path       string
 	conf       *common.Config
-	TableEvent func(name string, eventType byte)
+	TableEvent func(info *TableInfo, eventType byte)
 	timer      *time.Ticker
 	now        time.Time
 }
@@ -30,6 +30,10 @@ func (t *TableManager) Close() (err error) {
 	for _, tb := range t.tableMap {
 		if err = tb.Close(); err != nil {
 			log.Error("close table error", err)
+		}
+		//synchronize to cdb
+		if t.TableEvent != nil {
+			t.TableEvent(&tb.TableInfo, SetTable) //new table is 0
 		}
 	}
 	if t.timer != nil {
@@ -44,13 +48,17 @@ func (t *TableManager) GetTable(name string) (table *Table, err error) {
 	defer t.lock.Unlock()
 	table, ok := t.tableMap[name]
 	if !ok {
-		if table, err = LoadTable(t.path, common.HashString(name)); err != nil {
+		if table, err = LoadTable(t.path, TableInfo{
+			Name:       name,
+			CreateTime: time.Now(),
+			Host:       "localhost",
+		}); err != nil {
 			return nil, err
 		} else {
 			t.tableMap[name] = table
 			//synchronize to cdb
 			if t.TableEvent != nil {
-				t.TableEvent(name, NewTable) //new table is 0
+				t.TableEvent(&table.TableInfo, SetTable) //new table is 0
 			}
 		}
 	}
@@ -63,7 +71,7 @@ func (t *TableManager) DeleteTable(name string) (err error) {
 	defer t.lock.Unlock()
 	table, ok := t.tableMap[name]
 	//delete dir
-	log.Debugf("delete table %s # %s", name, table.createTime.Format(TimeFormat))
+	log.Debugf("delete table %s # %s", name, table.CreateTime.Format(TimeFormat))
 
 	if ok {
 		err = table.Close()
@@ -73,7 +81,7 @@ func (t *TableManager) DeleteTable(name string) (err error) {
 		err = os.RemoveAll(table.path)
 	}
 	if err == nil && t.TableEvent != nil {
-		t.TableEvent(name, DeleteTable)
+		t.TableEvent(&table.TableInfo, DeleteTable)
 	}
 	return
 }
@@ -98,10 +106,9 @@ func NewTableManager(cfg *common.Config, tables []*TableInfo) (t *TableManager) 
 	}
 	for _, tb := range tables {
 		if _, ok := t.tableMap[tb.Name]; !ok {
-			if table, err := LoadTable(t.path, common.HashString(tb.Name)); err == nil {
-				table.createTime = tb.CreateTime
+			if table, err := LoadTable(t.path, *tb); err == nil {
 				t.tableMap[tb.Name] = table
-				log.Debugf("load table %s # %s", tb.Name, tb.CreateTime.Format(TimeFormat))
+				log.Debugf("load table %s # %s", tb.Name, string(tb.ToByte()))
 			} else {
 				log.Errorf("load table %s error", tb.Name, err)
 			}

@@ -18,18 +18,10 @@ type ClusterDB struct {
 }
 
 //set table info
-func (c *ClusterDB) SetTable(name string) (error) {
+func (c *ClusterDB) SetTable(name string, info []byte) (error) {
 	c.lock.Lock()
 	defer c.lock.Unlock()
-	if exists, err := c.data.Exists([]byte(name)); err == nil && exists {
-		return nil
-	}
-	t := tables.TableInfo{
-		Name:       name,
-		Host:       "localhost",
-		CreateTime: time.Now(),
-	}
-	return c.data.Set([]byte(name), t.ToByte())
+	return c.data.Set([]byte(name), info)
 }
 
 //get all local tables
@@ -71,7 +63,11 @@ func (c *ClusterDB) RemoveTable(name string) (err error) {
 func (c *ClusterDB) Start(path string) (err error) {
 	c.lock.Lock()
 	defer c.lock.Unlock()
-	c.data, err = tables.LoadTable(path, "cdb")
+	c.data, err = tables.LoadTable(path, tables.TableInfo{
+		Name:       "cdb",
+		Host:       "localhost",
+		CreateTime: time.Now(),
+	})
 	if err != nil {
 		return err
 	}

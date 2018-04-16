@@ -31,16 +31,16 @@ func (b *Boot) Start() error {
 		return goerr.New("load local table error")
 	}
 	b.tm = tables.NewTableManager(b.cfg, tbs)
-	b.tm.TableEvent = func(name string, eventType byte) {
+	b.tm.TableEvent = func(info *tables.TableInfo, eventType byte) {
 		if eventType == 0 {
-			if err := b.db.SetTable(name); err != nil {
-				if err = b.db.SetTable(name); err != nil {
+			if err := b.db.SetTable(info.Name, info.ToByte()); err != nil {
+				if err = b.db.SetTable(info.Name, info.ToByte()); err != nil {
 					log.Error("write cdb error", err)
 				}
 			}
 		} else {
-			if err := b.db.RemoveTable(name); err != nil {
-				if err = b.db.RemoveTable(name); err != nil {
+			if err := b.db.RemoveTable(info.Name); err != nil {
+				if err = b.db.RemoveTable(info.Name); err != nil {
 					log.Error("remove table from cdb is error", err)
 				}
 			}
@@ -69,5 +69,5 @@ func (b *Boot) Close() error {
 	if err := b.db.Close(); err != nil {
 		return goerr.New("stop cdb error", err)
 	}
-
+	return nil
 }

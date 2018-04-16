@@ -12,13 +12,13 @@ import (
 )
 
 type Table struct {
-	db         *leveldb.DB
-	name       string
-	isOpen     bool
-	createTime time.Time
+	TableInfo
+	db     *leveldb.DB
+	isOpen bool
 	//last update time ,save memory
 	lastTime time.Time
-	path     string
+	//file save path
+	path string
 }
 type TableValue struct {
 	Key   string
@@ -26,10 +26,11 @@ type TableValue struct {
 }
 
 //load a new TableKV
-func LoadTable(p, name string) (t *Table, err error) {
+func LoadTable(p string, info TableInfo) (t *Table, err error) {
 	t = &Table{
-		isOpen: false,
-		path:   path.Join(p, name),
+		isOpen:    false,
+		path:      path.Join(p, info.Name),
+		TableInfo: info,
 	}
 	if t.db, err = leveldb.OpenFile(t.path, &opt.Options{
 		WriteBuffer:         common.WriteBuffer * opt.MiB, //write buffer is important.
@@ -39,17 +40,20 @@ func LoadTable(p, name string) (t *Table, err error) {
 		CompactionTotalSize: 16 * opt.DefaultCompactionTotalSize,
 	}); err == nil {
 		t.isOpen = true
-		t.name = name
+		t.TableInfo = info
 	} else {
 		log.Error("load table error", err)
 	}
-	t.createTime = time.Now()
+
+	if t.CreateTime.Sub(time.Time{}).Seconds() < 1 {
+		t.CreateTime = time.Now()
+	}
 	return
 }
 
 //close TableKV
 func (t *Table) Close() error {
-	log.Debugf("%s is close", t.name)
+	log.Debugf("%s is close", t.Name)
 	if t.db != nil {
 		t.isOpen = false
 		return t.db.Close()
