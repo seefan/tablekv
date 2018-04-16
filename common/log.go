@@ -8,7 +8,6 @@ import (
 	"path/filepath"
 	"runtime"
 	"strings"
-	"syscall"
 )
 
 var (
@@ -40,7 +39,7 @@ func PrintErr() {
 		path = filepath.Dir(path)
 		path += string(os.PathSeparator) + "fault.txt"
 		str := fmt.Sprintf("%v\n", err)
-		for i := 0; i < 10; i++ {
+		for i := 1; i < 10; i++ {
 			funcName, file, line, ok := runtime.Caller(i)
 			if ok {
 				str += fmt.Sprintf("frame %v:[func:%v,file:%v,line:%v]\n", i, runtime.FuncForPC(funcName).Name(), file, line)
@@ -49,13 +48,11 @@ func PrintErr() {
 		logFile, err := os.OpenFile(path, os.O_CREATE|os.O_APPEND|os.O_RDWR, 0660)
 		if err != nil {
 			println(err.Error())
+			println(str)
 			return
 		}
 		defer logFile.Close()
 		println(str)
 		logFile.WriteString(str)
-		if runtime.GOOS == "linux" {
-			syscall.Dup2(int(logFile.Fd()), int(os.Stderr.Fd()))
-		}
 	}
 }
