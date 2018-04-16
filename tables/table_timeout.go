@@ -19,7 +19,9 @@ func (t *TableManager) timeProcessor() {
 		}
 		if len(ts) > 0 {
 			for _, k := range ts {
-				t.DeleteTable(k)
+				if err := t.DeleteTable(k); err != nil {
+					log.Error("delete table has error", err)
+				}
 			}
 		}
 		log.Debugf("online table count is %d,running time is %s.", len(t.tableMap), time.Since(t.now).String())
@@ -32,7 +34,6 @@ func (t *TableManager) timeProcessor() {
 				bs.WriteString(v)
 				bs.WriteRune('\n')
 			}
-			log.Debugf(bs.String())
 		}
 	}
 }

@@ -9,7 +9,11 @@ import (
 	"time"
 )
 
-const TimeFormat = "2006-01-02 15:04:05"
+const (
+	TimeFormat  = "2006-01-02 15:04:05"
+	NewTable    = 0
+	DeleteTable = 1
+)
 
 type TableManager struct {
 	tableMap   map[string]*Table
@@ -46,7 +50,7 @@ func (t *TableManager) GetTable(name string) (table *Table, err error) {
 			t.tableMap[name] = table
 			//synchronize to cdb
 			if t.TableEvent != nil {
-				t.TableEvent(name, 0) //new table is 0
+				t.TableEvent(name, NewTable) //new table is 0
 			}
 		}
 	}
@@ -69,7 +73,7 @@ func (t *TableManager) DeleteTable(name string) (err error) {
 		err = os.RemoveAll(table.path)
 	}
 	if err == nil && t.TableEvent != nil {
-		t.TableEvent(name, 1) //delete table is 1
+		t.TableEvent(name, DeleteTable)
 	}
 	return
 }
@@ -84,14 +88,15 @@ func NewTableManager(cfg *common.Config, tables []*TableInfo) (t *TableManager) 
 		now:      time.Now(),
 	}
 	if common.FileIsNotExist(t.path) {
-		os.MkdirAll(t.path, 0764)
+		if err := os.MkdirAll(t.path, 0764); err != nil {
+			log.Error("MkdirAll error", err)
+		}
 	}
 	go t.timeProcessor()
 	if tables == nil {
 		return
 	}
 	for _, tb := range tables {
-
 		if _, ok := t.tableMap[tb.Name]; !ok {
 			if table, err := LoadTable(t.path, common.HashString(tb.Name)); err == nil {
 				table.lastUpdate = tb.LastUpdate

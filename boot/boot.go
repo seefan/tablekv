@@ -7,6 +7,7 @@ import (
 	"github.com/seefan/tablekv/tables"
 	"github.com/seefan/tablekv/common"
 	"github.com/seefan/tablekv/process"
+	"github.com/seefan/goerr"
 )
 
 type Boot struct {
@@ -20,14 +21,14 @@ func (b *Boot) Start() error {
 	//start center db
 	b.db = new(cdb.ClusterDB)
 	if err := b.db.Start(b.cfg.VarPath); err != nil {
-		log.Error("clusterDB start error", err)
+		return goerr.New("clusterDB start error", err)
 	}
 	log.Debug("clusterDB loaded")
 	//start table manager and load table
 
 	tbs, err := b.db.GetLocalTables()
 	if err != nil {
-		log.Errorf("load local table error")
+		return goerr.New("load local table error")
 	}
 	b.tm = tables.NewTableManager(b.cfg, tbs)
 	b.tm.TableEvent = func(name string, eventType byte) {
@@ -57,16 +58,16 @@ func (b *Boot) Start() error {
 	}
 	return nil
 }
-func (b *Boot) Close() {
+func (b *Boot) Close() error {
 	if err := b.cnl.Stop(); err != nil {
-		log.Error("stop processor error", err)
+		return goerr.New("stop processor error", err)
 	}
 
 	if err := b.tm.Close(); err != nil {
-		log.Error("stop table manager error", err)
+		return goerr.New("stop table manager error", err)
 	}
 	if err := b.db.Close(); err != nil {
-		log.Error("stop cdb error", err)
+		return goerr.New("stop cdb error", err)
 	}
 
 }

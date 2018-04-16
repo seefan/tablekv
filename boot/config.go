@@ -30,11 +30,15 @@ func (b *Boot) LoadConfig(confPath string) *common.Config {
 
 	//create log  directory
 	if common.FileIsNotExist(cfg.LogPath) {
-		os.MkdirAll(cfg.LogPath, 0764)
+		if err := os.MkdirAll(cfg.LogPath, 0764); err != nil {
+			println("make log dir has error", err)
+		}
 	}
 	//create data  directory
 	if common.FileIsNotExist(cfg.VarPath) {
-		os.MkdirAll(cfg.VarPath, 0764)
+		if err := os.MkdirAll(cfg.VarPath, 0764); err != nil {
+			panic("make var dir has error:" + err.Error())
+		}
 	}
 	b.cfg = cfg
 	return cfg

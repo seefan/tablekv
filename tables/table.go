@@ -146,14 +146,19 @@ func (t *Table) BatchDelete(keys [][]byte) error {
 //Returns number of alive iterators.
 func (t *Table) Info() map[string]string {
 	re := make(map[string]string)
-	re["leveldb.stats"], _ = t.db.GetProperty("leveldb.stats")
-	re["leveldb.iostats"], _ = t.db.GetProperty("leveldb.iostats")
-	//re["leveldb.writedelay"], _ = t.db.GetProperty("leveldb.writedelay")
-	//re["leveldb.sstables"], _ = t.db.GetProperty("leveldb.sstables")
-	//re["leveldb.blockpool"], _ = t.db.GetProperty("leveldb.blockpool")
-	re["leveldb.cachedblock"], _ = t.db.GetProperty("leveldb.cachedblock")
-	//re["leveldb.openedtables"], _ = t.db.GetProperty("leveldb.openedtables")
-	//re["leveldb.alivesnaps"], _ = t.db.GetProperty("leveldb.alivesnaps")
-	//re["leveldb.aliveiters"], _ = t.db.GetProperty("leveldb.aliveiters")
+	if t.isOpen {
+		re["leveldb.stats"], _ = t.db.GetProperty("leveldb.stats")
+		re["leveldb.iostats"], _ = t.db.GetProperty("leveldb.iostats")
+		//re["leveldb.writedelay"], _ = t.db.GetProperty("leveldb.writedelay")
+		//re["leveldb.sstables"], _ = t.db.GetProperty("leveldb.sstables")
+		//re["leveldb.blockpool"], _ = t.db.GetProperty("leveldb.blockpool")
+		re["leveldb.cachedblock"], _ = t.db.GetProperty("leveldb.cachedblock")
+		//re["leveldb.openedtables"], _ = t.db.GetProperty("leveldb.openedtables")
+		//re["leveldb.alivesnaps"], _ = t.db.GetProperty("leveldb.alivesnaps")
+		//re["leveldb.aliveiters"], _ = t.db.GetProperty("leveldb.aliveiters")
+	} else {
+		re["leveldb.stats"] = "not open"
+	}
+
 	return re
 }

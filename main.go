@@ -55,6 +55,8 @@ func stop(cfg *common.Config) {
 		} else {
 			seelog.Error("TableKV stop error", err)
 		}
+	} else {
+		println("pid file not found")
 	}
 }
 func start(cfg *common.Config, b *boot.Boot) {
@@ -68,10 +70,15 @@ func start(cfg *common.Config, b *boot.Boot) {
 			sig <- syscall.SIGABRT
 		}
 	}()
-	common.SavePid(path.Join(cfg.VarPath, "run.pid"))
+	if err := common.SavePid(path.Join(cfg.VarPath, "run.pid")); err != nil {
+		seelog.Error("can not save pid", err)
+	}
 	s := <-sig
 
 	seelog.Info("received signal ", s)
-	b.Close()
-	seelog.Info("TableKV is closed")
+	if err := b.Close(); err != nil {
+		seelog.Error("TableKV close has error", err)
+	} else {
+		seelog.Info("TableKV is closed")
+	}
 }

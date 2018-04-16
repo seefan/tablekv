@@ -4,6 +4,7 @@ import (
 	log "github.com/cihub/seelog"
 	"github.com/seefan/tablekv/tables"
 	"time"
+	"sync"
 )
 
 const (
@@ -13,10 +14,13 @@ const (
 //Maintain node data information
 type ClusterDB struct {
 	data *tables.Table
+	lock sync.Mutex
 }
 
 //set table info
 func (c *ClusterDB) SetTable(name string) (error) {
+	c.lock.Lock()
+	defer c.lock.Unlock()
 	if exists, err := c.data.Exists([]byte(name)); err == nil && exists {
 		return nil
 	}
@@ -58,11 +62,15 @@ func (c *ClusterDB) GetTable(name string) (*tables.TableInfo, error) {
 
 //remove table info
 func (c *ClusterDB) RemoveTable(name string) (err error) {
+	c.lock.Lock()
+	defer c.lock.Unlock()
 	return c.data.Delete([]byte(name))
 }
 
 //start
 func (c *ClusterDB) Start(path string) (err error) {
+	c.lock.Lock()
+	defer c.lock.Unlock()
 	c.data, err = tables.LoadTable(path, "cdb")
 	if err != nil {
 		return err
@@ -73,6 +81,8 @@ func (c *ClusterDB) Start(path string) (err error) {
 
 //stop
 func (c *ClusterDB) Close() (err error) {
+	c.lock.Lock()
+	defer c.lock.Unlock()
 	if c.data != nil {
 		err = c.data.Close()
 	}
