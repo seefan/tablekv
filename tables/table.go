@@ -15,8 +15,10 @@ type Table struct {
 	db         *leveldb.DB
 	name       string
 	isOpen     bool
-	lastUpdate time.Time
-	path       string
+	createTime time.Time
+	//last update time ,save memory
+	lastTime time.Time
+	path     string
 }
 type TableValue struct {
 	Key   string
@@ -41,7 +43,7 @@ func LoadTable(p, name string) (t *Table, err error) {
 	} else {
 		log.Error("load table error", err)
 	}
-	t.lastUpdate = time.Now()
+	t.createTime = time.Now()
 	return
 }
 

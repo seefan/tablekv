@@ -13,7 +13,7 @@ func (t *TableManager) timeProcessor() {
 	for range t.timer.C {
 		var ts []string
 		for k, tab := range t.tableMap {
-			if time.Since(tab.lastUpdate).Hours() > common.Timeout {
+			if time.Since(tab.createTime).Hours() > common.Timeout {
 				ts = append(ts, k)
 			}
 		}

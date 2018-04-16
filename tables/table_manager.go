@@ -63,7 +63,7 @@ func (t *TableManager) DeleteTable(name string) (err error) {
 	defer t.lock.Unlock()
 	table, ok := t.tableMap[name]
 	//delete dir
-	log.Debugf("delete table %s # %s", name, table.lastUpdate.Format(TimeFormat))
+	log.Debugf("delete table %s # %s", name, table.createTime.Format(TimeFormat))
 
 	if ok {
 		err = table.Close()
@@ -99,9 +99,9 @@ func NewTableManager(cfg *common.Config, tables []*TableInfo) (t *TableManager) 
 	for _, tb := range tables {
 		if _, ok := t.tableMap[tb.Name]; !ok {
 			if table, err := LoadTable(t.path, common.HashString(tb.Name)); err == nil {
-				table.lastUpdate = tb.LastUpdate
+				table.createTime = tb.CreateTime
 				t.tableMap[tb.Name] = table
-				log.Debugf("load table %s # %s", tb.Name, tb.LastUpdate.Format(TimeFormat))
+				log.Debugf("load table %s # %s", tb.Name, tb.CreateTime.Format(TimeFormat))
 			} else {
 				log.Errorf("load table %s error", tb.Name, err)
 			}

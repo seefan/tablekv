@@ -6,4 +6,8 @@ service TableKV{
     bool Exists(1:binary key)
     void Delete(1:binary key)
     void BatchSet(1:list<binary> keys ,2:list<binary> values)
+    binary QGet()
+    void QSet(1:binary value)
+    void BatchQSet(1:list<binary> value)
+    void BatchQGet(1:i16 size)
 }

@@ -27,7 +27,7 @@ func (c *ClusterDB) SetTable(name string) (error) {
 	t := tables.TableInfo{
 		Name:       name,
 		Host:       "localhost",
-		LastUpdate: time.Now(),
+		CreateTime: time.Now(),
 	}
 	return c.data.Set([]byte(name), t.ToByte())
 }

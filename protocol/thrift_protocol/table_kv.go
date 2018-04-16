@@ -50,7 +50,7 @@ func (t *ThriftProcessor) Get(ctx context.Context, key []byte) (r []byte, err er
 //  - Key
 //  - Value
 func (t *ThriftProcessor) Set(ctx context.Context, key []byte, value []byte) (err error) {
-	return t.p.Set(key,value)
+	return t.p.Set(key, value)
 }
 
 // Parameters:
@@ -71,5 +71,27 @@ func (t *ThriftProcessor) Delete(ctx context.Context, key []byte) (err error) {
 //  - Keys
 //  - Values
 func (t *ThriftProcessor) BatchSet(ctx context.Context, keys [][]byte, values [][]byte) (err error) {
-	return t.p.BatchSet(keys,values)
+	return t.p.BatchSet(keys, values)
+}
+
+func (t *ThriftProcessor) QGet(ctx context.Context) (r []byte, err error) {
+	return nil, nil
+}
+
+// Parameters:
+//  - Value
+func (t *ThriftProcessor) QSet(ctx context.Context, value []byte) (err error) {
+	return nil
+}
+
+// Parameters:
+//  - Value
+func (t *ThriftProcessor) BatchQSet(ctx context.Context, value [][]byte) (err error) {
+	return nil
+}
+
+// Parameters:
+//  - Size
+func (t *ThriftProcessor) BatchQGet(ctx context.Context, size int16) (err error) {
+	return nil
 }

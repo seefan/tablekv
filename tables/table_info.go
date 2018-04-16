@@ -7,8 +7,10 @@ import (
 
 type TableInfo struct {
 	Name       string
-	LastUpdate time.Time
+	CreateTime time.Time
 	Host       string
+	//only for queue,max id
+	QueueId int64
 }
 
 func (t *TableInfo) ToByte() []byte {
@@ -25,7 +27,7 @@ func (t *TableInfo) FromByte(bs []byte) error {
 	} else {
 		t.Host = tmp.Host
 		t.Name = tmp.Name
-		t.LastUpdate = tmp.LastUpdate
+		t.CreateTime = tmp.CreateTime
 		return nil
 	}
 }
