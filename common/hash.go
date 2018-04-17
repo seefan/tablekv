@@ -36,7 +36,7 @@ func HashPath(path string) string {
 		if s >= 48 && s <= 57 || s >= 65 && s <= 90 || s >= 97 && s <= 122 {
 			ss = append(ss, s)
 		} else {
-			ts := strconv.AppendInt(nil, int64(s), 10)
+			ts := strconv.AppendInt(nil, int64(s), 32)
 			ss = append(ss, []byte(ts)...)
 		}
 	}

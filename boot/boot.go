@@ -59,15 +59,20 @@ func (b *Boot) Start() error {
 	return nil
 }
 func (b *Boot) Close() error {
-	if err := b.cnl.Stop(); err != nil {
-		return goerr.New("stop processor error", err)
+	if b.cnl != nil {
+		if err := b.cnl.Stop(); err != nil {
+			return goerr.New("stop processor error", err)
+		}
 	}
-
-	if err := b.tm.Close(); err != nil {
-		return goerr.New("stop table manager error", err)
+	if b.tm != nil {
+		if err := b.tm.Close(); err != nil {
+			return goerr.New("stop table manager error", err)
+		}
 	}
-	if err := b.db.Close(); err != nil {
-		return goerr.New("stop cdb error", err)
+	if b.db != nil {
+		if err := b.db.Close(); err != nil {
+			return goerr.New("stop cdb error", err)
+		}
 	}
 	return nil
 }

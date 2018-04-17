@@ -1,13 +1,15 @@
 namespace go thrift_protocol
 namespace java net.seefan.table_kv
 service TableKV{
-    binary Get(1:binary key)
-    void Set(1:binary key,2:binary value)
-    bool Exists(1:binary key)
-    void Delete(1:binary key)
-    void BatchSet(1:list<binary> keys ,2:list<binary> values)
-    binary QGet()
-    void QSet(1:binary value)
-    void BatchQSet(1:list<binary> value)
-    void BatchQGet(1:i16 size)
+    binary Get(1:binary key),
+    void Set(1:binary key,2:binary value),
+    bool Exists(1:binary key),
+    void Delete(1:binary key),
+    void BatchSet(1:list<binary> keys ,2:list<binary> values),
+    list<list<binary>> Scan(1:binary key_start,2:binary key_end,3:i32 limit),
+    map<binary,binary> ScanMap(1:binary key_start,2:binary key_end,3:i32 limit),
+    binary QGet(),
+    void QSet(1:binary value),
+    void BatchQSet(1:list<binary> value),
+    list<binary> BatchQGet(1:i32 size),
 }

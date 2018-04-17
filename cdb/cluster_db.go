@@ -5,11 +5,10 @@ import (
 	"github.com/seefan/tablekv/tables"
 	"time"
 	"sync"
+	"github.com/seefan/goerr"
 )
 
-const (
-	TimeFormat = "20060102150405"
-)
+
 
 //Maintain node data information
 type ClusterDB struct {
@@ -21,21 +20,27 @@ type ClusterDB struct {
 func (c *ClusterDB) SetTable(name string, info []byte) (error) {
 	c.lock.Lock()
 	defer c.lock.Unlock()
+	if c.data == nil {
+		return goerr.New("cdb not init")
+	}
 	return c.data.Set([]byte(name), info)
 }
 
 //get all local tables
 func (c *ClusterDB) GetLocalTables() (re []*tables.TableInfo, err error) {
-	ts, err := c.data.Scan(nil, nil)
+	if c.data == nil {
+		return nil, goerr.New("cdb not init")
+	}
+	ks,vs, err := c.data.Scan(nil, nil, 0)
 	if err != nil {
 		return nil, err
 	}
-	for _, v := range ts {
+	for i := range ks {
 		ti := new(tables.TableInfo)
-		if err = ti.FromByte([]byte(v.Value)); err == nil && ti.Host == "localhost" {
+		if err := ti.FromByte([]byte(vs[i])); err == nil && ti.Host == "localhost" {
 			re = append(re, ti)
 		} else {
-			log.Debug(err)
+			log.Error(err)
 		}
 	}
 	return
@@ -43,6 +48,11 @@ func (c *ClusterDB) GetLocalTables() (re []*tables.TableInfo, err error) {
 
 //get table info
 func (c *ClusterDB) GetTable(name string) (*tables.TableInfo, error) {
+	if c.data == nil {
+		return nil, goerr.New("cdb not init")
+	}
+	c.lock.Lock()
+	defer c.lock.Unlock()
 	if bs, err := c.data.Get([]byte(name)); err == nil {
 		tb := new(tables.TableInfo)
 		tb.FromByte(bs)
@@ -54,6 +64,9 @@ func (c *ClusterDB) GetTable(name string) (*tables.TableInfo, error) {
 
 //remove table info
 func (c *ClusterDB) RemoveTable(name string) (err error) {
+	if c.data == nil {
+		return goerr.New("cdb not init")
+	}
 	c.lock.Lock()
 	defer c.lock.Unlock()
 	return c.data.Delete([]byte(name))

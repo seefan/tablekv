@@ -20,16 +20,12 @@ type Table struct {
 	//file save path
 	path string
 }
-type TableValue struct {
-	Key   string
-	Value string
-}
 
 //load a new TableKV
 func LoadTable(p string, info TableInfo) (t *Table, err error) {
 	t = &Table{
 		isOpen:    false,
-		path:      path.Join(p, info.Name),
+		path:      path.Join(p, common.HashPath(info.Name)),
 		TableInfo: info,
 	}
 	if t.db, err = leveldb.OpenFile(t.path, &opt.Options{
@@ -66,7 +62,7 @@ func (t *Table) Get(key []byte) ([]byte, error) {
 	if !t.isOpen {
 		return nil, goerr.New("db is not open")
 	}
-	return t.db.Get([]byte(key), nil)
+	return t.db.Get(key, nil)
 }
 
 //set key and value
@@ -94,17 +90,27 @@ func (t *Table) Exists(key []byte) (bool, error) {
 }
 
 //scan keys from start to end
-func (t *Table) Scan(start, end []byte) (re []TableValue, err error) {
+func (t *Table) Scan(start, end []byte, limit int) (key [][]byte, value [][]byte, err error) {
 	if !t.isOpen {
-		return nil, goerr.New("db is not open")
+		return nil, nil, goerr.New("db is not open")
 	}
-
+	index := 0
 	its := t.db.NewIterator(&util.Range{Start: start, Limit: end}, nil)
 	for its.Next() {
-		re = append(re, TableValue{Key: string(its.Key()), Value: string(its.Value())})
+		index += 1
+		if limit > 0 && index > limit {
+			break
+		}
+		var k []byte
+		k = append(k, its.Key()...)
+		var v []byte
+		v = append(v, its.Value()...)
+		key = append(key, k)
+		value = append(value, v)
 	}
 	its.Release()
 	err = its.Error()
+
 	return
 }
 

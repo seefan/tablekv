@@ -36,6 +36,16 @@ type TableKV interface {
   //  - Keys
   //  - Values
   BatchSet(ctx context.Context, keys [][]byte, values [][]byte) (err error)
+  // Parameters:
+  //  - KeyStart
+  //  - KeyEnd
+  //  - Limit
+  Scan(ctx context.Context, key_start []byte, key_end []byte, limit int32) (r [][][]byte, err error)
+  // Parameters:
+  //  - KeyStart
+  //  - KeyEnd
+  //  - Limit
+  ScanMap(ctx context.Context, key_start []byte, key_end []byte, limit int32) (r map[string][]byte, err error)
   QGet(ctx context.Context) (r []byte, err error)
   // Parameters:
   //  - Value
@@ -45,7 +55,7 @@ type TableKV interface {
   BatchQSet(ctx context.Context, value [][]byte) (err error)
   // Parameters:
   //  - Size
-  BatchQGet(ctx context.Context, size int16) (err error)
+  BatchQGet(ctx context.Context, size int32) (r [][]byte, err error)
 }
 
 type TableKVClient struct {
@@ -136,22 +146,54 @@ func (p *TableKVClient) BatchSet(ctx context.Context, keys [][]byte, values [][]
   return nil
 }
 
-func (p *TableKVClient) QGet(ctx context.Context) (r []byte, err error) {
-  var _args10 TableKVQGetArgs
-  var _result11 TableKVQGetResult
-  if err = p.c.Call(ctx, "QGet", &_args10, &_result11); err != nil {
+// Parameters:
+//  - KeyStart
+//  - KeyEnd
+//  - Limit
+func (p *TableKVClient) Scan(ctx context.Context, key_start []byte, key_end []byte, limit int32) (r [][][]byte, err error) {
+  var _args10 TableKVScanArgs
+  _args10.KeyStart = key_start
+  _args10.KeyEnd = key_end
+  _args10.Limit = limit
+  var _result11 TableKVScanResult
+  if err = p.c.Call(ctx, "Scan", &_args10, &_result11); err != nil {
     return
   }
   return _result11.GetSuccess(), nil
 }
 
 // Parameters:
+//  - KeyStart
+//  - KeyEnd
+//  - Limit
+func (p *TableKVClient) ScanMap(ctx context.Context, key_start []byte, key_end []byte, limit int32) (r map[string][]byte, err error) {
+  var _args12 TableKVScanMapArgs
+  _args12.KeyStart = key_start
+  _args12.KeyEnd = key_end
+  _args12.Limit = limit
+  var _result13 TableKVScanMapResult
+  if err = p.c.Call(ctx, "ScanMap", &_args12, &_result13); err != nil {
+    return
+  }
+  return _result13.GetSuccess(), nil
+}
+
+func (p *TableKVClient) QGet(ctx context.Context) (r []byte, err error) {
+  var _args14 TableKVQGetArgs
+  var _result15 TableKVQGetResult
+  if err = p.c.Call(ctx, "QGet", &_args14, &_result15); err != nil {
+    return
+  }
+  return _result15.GetSuccess(), nil
+}
+
+// Parameters:
 //  - Value
 func (p *TableKVClient) QSet(ctx context.Context, value []byte) (err error) {
-  var _args12 TableKVQSetArgs
-  _args12.Value = value
-  var _result13 TableKVQSetResult
-  if err = p.c.Call(ctx, "QSet", &_args12, &_result13); err != nil {
+  var _args16 TableKVQSetArgs
+  _args16.Value = value
+  var _result17 TableKVQSetResult
+  if err = p.c.Call(ctx, "QSet", &_args16, &_result17); err != nil {
     return
   }
   return nil
@@ -160,10 +202,10 @@ func (p *TableKVClient) QSet(ctx context.Context, value []byte) (err error) {
 // Parameters:
 //  - Value
 func (p *TableKVClient) BatchQSet(ctx context.Context, value [][]byte) (err error) {
-  var _args14 TableKVBatchQSetArgs
-  _args14.Value = value
-  var _result15 TableKVBatchQSetResult
-  if err = p.c.Call(ctx, "BatchQSet", &_args14, &_result15); err != nil {
+  var _args18 TableKVBatchQSetArgs
+  _args18.Value = value
+  var _result19 TableKVBatchQSetResult
+  if err = p.c.Call(ctx, "BatchQSet", &_args18, &_result19); err != nil {
     return
   }
   return nil
@@ -171,14 +213,14 @@ func (p *TableKVClient) BatchQSet(ctx context.Context, value [][]byte) (err erro
 
 // Parameters:
 //  - Size
-func (p *TableKVClient) BatchQGet(ctx context.Context, size int16) (err error) {
-  var _args16 TableKVBatchQGetArgs
-  _args16.Size = size
-  var _result17 TableKVBatchQGetResult
-  if err = p.c.Call(ctx, "BatchQGet", &_args16, &_result17); err != nil {
+func (p *TableKVClient) BatchQGet(ctx context.Context, size int32) (r [][]byte, err error) {
+  var _args20 TableKVBatchQGetArgs
+  _args20.Size = size
+  var _result21 TableKVBatchQGetResult
+  if err = p.c.Call(ctx, "BatchQGet", &_args20, &_result21); err != nil {
     return
   }
-  return nil
+  return _result21.GetSuccess(), nil
 }
 
 type TableKVProcessor struct {
@@ -201,17 +243,19 @@ func (p *TableKVProcessor) ProcessorMap() map[string]thrift.TProcessorFunction {
 
 func NewTableKVProcessor(handler TableKV) *TableKVProcessor {
 
-  self18 := &TableKVProcessor{handler:handler, processorMap:make(map[string]thrift.TProcessorFunction)}
-  self18.processorMap["Get"] = &tableKVProcessorGet{handler:handler}
-  self18.processorMap["Set"] = &tableKVProcessorSet{handler:handler}
-  self18.processorMap["Exists"] = &tableKVProcessorExists{handler:handler}
-  self18.processorMap["Delete"] = &tableKVProcessorDelete{handler:handler}
-  self18.processorMap["BatchSet"] = &tableKVProcessorBatchSet{handler:handler}
-  self18.processorMap["QGet"] = &tableKVProcessorQGet{handler:handler}
-  self18.processorMap["QSet"] = &tableKVProcessorQSet{handler:handler}
-  self18.processorMap["BatchQSet"] = &tableKVProcessorBatchQSet{handler:handler}
-  self18.processorMap["BatchQGet"] = &tableKVProcessorBatchQGet{handler:handler}
-return self18
+  self22 := &TableKVProcessor{handler:handler, processorMap:make(map[string]thrift.TProcessorFunction)}
+  self22.processorMap["Get"] = &tableKVProcessorGet{handler:handler}
+  self22.processorMap["Set"] = &tableKVProcessorSet{handler:handler}
+  self22.processorMap["Exists"] = &tableKVProcessorExists{handler:handler}
+  self22.processorMap["Delete"] = &tableKVProcessorDelete{handler:handler}
+  self22.processorMap["BatchSet"] = &tableKVProcessorBatchSet{handler:handler}
+  self22.processorMap["Scan"] = &tableKVProcessorScan{handler:handler}
+  self22.processorMap["ScanMap"] = &tableKVProcessorScanMap{handler:handler}
+  self22.processorMap["QGet"] = &tableKVProcessorQGet{handler:handler}
+  self22.processorMap["QSet"] = &tableKVProcessorQSet{handler:handler}
+  self22.processorMap["BatchQSet"] = &tableKVProcessorBatchQSet{handler:handler}
+  self22.processorMap["BatchQGet"] = &tableKVProcessorBatchQGet{handler:handler}
+return self22
 }
 
 func (p *TableKVProcessor) Process(ctx context.Context, iprot, oprot thrift.TProtocol) (success bool, err thrift.TException) {
@@ -222,12 +266,12 @@ func (p *TableKVProcessor) Process(ctx context.Context, iprot, oprot thrift.TPro
   }
   iprot.Skip(thrift.STRUCT)
   iprot.ReadMessageEnd()
-  x19 := thrift.NewTApplicationException(thrift.UNKNOWN_METHOD, "Unknown function " + name)
+  x23 := thrift.NewTApplicationException(thrift.UNKNOWN_METHOD, "Unknown function " + name)
   oprot.WriteMessageBegin(name, thrift.EXCEPTION, seqId)
-  x19.Write(oprot)
+  x23.Write(oprot)
   oprot.WriteMessageEnd()
   oprot.Flush()
-  return false, x19
+  return false, x23
 
 }
 
@@ -462,6 +506,102 @@ func (p *tableKVProcessorBatchSet) Process(ctx context.Context, seqId int32, ipr
   return true, err
 }
 
+type tableKVProcessorScan struct {
+  handler TableKV
+}
+
+func (p *tableKVProcessorScan) Process(ctx context.Context, seqId int32, iprot, oprot thrift.TProtocol) (success bool, err thrift.TException) {
+  args := TableKVScanArgs{}
+  if err = args.Read(iprot); err != nil {
+    iprot.ReadMessageEnd()
+    x := thrift.NewTApplicationException(thrift.PROTOCOL_ERROR, err.Error())
+    oprot.WriteMessageBegin("Scan", thrift.EXCEPTION, seqId)
+    x.Write(oprot)
+    oprot.WriteMessageEnd()
+    oprot.Flush()
+    return false, err
+  }
+
+  iprot.ReadMessageEnd()
+  result := TableKVScanResult{}
+var retval [][][]byte
+  var err2 error
+  if retval, err2 = p.handler.Scan(ctx, args.KeyStart, args.KeyEnd, args.Limit); err2 != nil {
+    x := thrift.NewTApplicationException(thrift.INTERNAL_ERROR, "Internal error processing Scan: " + err2.Error())
+    oprot.WriteMessageBegin("Scan", thrift.EXCEPTION, seqId)
+    x.Write(oprot)
+    oprot.WriteMessageEnd()
+    oprot.Flush()
+    return true, err2
+  } else {
+    result.Success = retval
+}
+  if err2 = oprot.WriteMessageBegin("Scan", thrift.REPLY, seqId); err2 != nil {
+    err = err2
+  }
+  if err2 = result.Write(oprot); err == nil && err2 != nil {
+    err = err2
+  }
+  if err2 = oprot.WriteMessageEnd(); err == nil && err2 != nil {
+    err = err2
+  }
+  if err2 = oprot.Flush(); err == nil && err2 != nil {
+    err = err2
+  }
+  if err != nil {
+    return
+  }
+  return true, err
+}
+
+type tableKVProcessorScanMap struct {
+  handler TableKV
+}
+
+func (p *tableKVProcessorScanMap) Process(ctx context.Context, seqId int32, iprot, oprot thrift.TProtocol) (success bool, err thrift.TException) {
+  args := TableKVScanMapArgs{}
+  if err = args.Read(iprot); err != nil {
+    iprot.ReadMessageEnd()
+    x := thrift.NewTApplicationException(thrift.PROTOCOL_ERROR, err.Error())
+    oprot.WriteMessageBegin("ScanMap", thrift.EXCEPTION, seqId)
+    x.Write(oprot)
+    oprot.WriteMessageEnd()
+    oprot.Flush()
+    return false, err
+  }
+
+  iprot.ReadMessageEnd()
+  result := TableKVScanMapResult{}
+var retval map[string][]byte
+  var err2 error
+  if retval, err2 = p.handler.ScanMap(ctx, args.KeyStart, args.KeyEnd, args.Limit); err2 != nil {
+    x := thrift.NewTApplicationException(thrift.INTERNAL_ERROR, "Internal error processing ScanMap: " + err2.Error())
+    oprot.WriteMessageBegin("ScanMap", thrift.EXCEPTION, seqId)
+    x.Write(oprot)
+    oprot.WriteMessageEnd()
+    oprot.Flush()
+    return true, err2
+  } else {
+    result.Success = retval
+}
+  if err2 = oprot.WriteMessageBegin("ScanMap", thrift.REPLY, seqId); err2 != nil {
+    err = err2
+  }
+  if err2 = result.Write(oprot); err == nil && err2 != nil {
+    err = err2
+  }
+  if err2 = oprot.WriteMessageEnd(); err == nil && err2 != nil {
+    err = err2
+  }
+  if err2 = oprot.Flush(); err == nil && err2 != nil {
+    err = err2
+  }
+  if err != nil {
+    return
+  }
+  return true, err
+}
+
 type tableKVProcessorQGet struct {
   handler TableKV
 }
@@ -618,15 +758,18 @@ func (p *tableKVProcessorBatchQGet) Process(ctx context.Context, seqId int32, ip
 
   iprot.ReadMessageEnd()
   result := TableKVBatchQGetResult{}
+var retval [][]byte
   var err2 error
-  if err2 = p.handler.BatchQGet(ctx, args.Size); err2 != nil {
+  if retval, err2 = p.handler.BatchQGet(ctx, args.Size); err2 != nil {
     x := thrift.NewTApplicationException(thrift.INTERNAL_ERROR, "Internal error processing BatchQGet: " + err2.Error())
     oprot.WriteMessageBegin("BatchQGet", thrift.EXCEPTION, seqId)
     x.Write(oprot)
     oprot.WriteMessageEnd()
     oprot.Flush()
     return true, err2
-  }
+  } else {
+    result.Success = retval
+}
   if err2 = oprot.WriteMessageBegin("BatchQGet", thrift.REPLY, seqId); err2 != nil {
     err = err2
   }
@@ -1424,13 +1567,13 @@ func (p *TableKVBatchSetArgs)  ReadField1(iprot thrift.TProtocol) error {
   tSlice := make([][]byte, 0, size)
   p.Keys =  tSlice
   for i := 0; i < size; i ++ {
-var _elem20 []byte
+var _elem24 []byte
     if v, err := iprot.ReadBinary(); err != nil {
     return thrift.PrependError("error reading field 0: ", err)
 } else {
-    _elem20 = v
+    _elem24 = v
 }
-    p.Keys = append(p.Keys, _elem20)
+    p.Keys = append(p.Keys, _elem24)
   }
   if err := iprot.ReadListEnd(); err != nil {
     return thrift.PrependError("error reading list end: ", err)
@@ -1446,13 +1589,13 @@ func (p *TableKVBatchSetArgs)  ReadField2(iprot thrift.TProtocol) error {
   tSlice := make([][]byte, 0, size)
   p.Values =  tSlice
   for i := 0; i < size; i ++ {
-var _elem21 []byte
+var _elem25 []byte
     if v, err := iprot.ReadBinary(); err != nil {
     return thrift.PrependError("error reading field 0: ", err)
 } else {
-    _elem21 = v
+    _elem25 = v
 }
-    p.Values = append(p.Values, _elem21)
+    p.Values = append(p.Values, _elem25)
   }
   if err := iprot.ReadListEnd(); err != nil {
     return thrift.PrependError("error reading list end: ", err)
@@ -1566,6 +1709,598 @@ func (p *TableKVBatchSetResult) String() string {
     return "<nil>"
   }
   return fmt.Sprintf("TableKVBatchSetResult(%+v)", *p)
+}
+
+// Attributes:
+//  - KeyStart
+//  - KeyEnd
+//  - Limit
+type TableKVScanArgs struct {
+  KeyStart []byte `thrift:"key_start,1" db:"key_start" json:"key_start"`
+  KeyEnd []byte `thrift:"key_end,2" db:"key_end" json:"key_end"`
+  Limit int32 `thrift:"limit,3" db:"limit" json:"limit"`
+}
+
+func NewTableKVScanArgs() *TableKVScanArgs {
+  return &TableKVScanArgs{}
+}
+
+
+func (p *TableKVScanArgs) GetKeyStart() []byte {
+  return p.KeyStart
+}
+
+func (p *TableKVScanArgs) GetKeyEnd() []byte {
+  return p.KeyEnd
+}
+
+func (p *TableKVScanArgs) GetLimit() int32 {
+  return p.Limit
+}
+func (p *TableKVScanArgs) Read(iprot thrift.TProtocol) error {
+  if _, err := iprot.ReadStructBegin(); err != nil {
+    return thrift.PrependError(fmt.Sprintf("%T read error: ", p), err)
+  }
+
+
+  for {
+    _, fieldTypeId, fieldId, err := iprot.ReadFieldBegin()
+    if err != nil {
+      return thrift.PrependError(fmt.Sprintf("%T field %d read error: ", p, fieldId), err)
+    }
+    if fieldTypeId == thrift.STOP { break; }
+    switch fieldId {
+    case 1:
+      if fieldTypeId == thrift.STRING {
+        if err := p.ReadField1(iprot); err != nil {
+          return err
+        }
+      } else {
+        if err := iprot.Skip(fieldTypeId); err != nil {
+          return err
+        }
+      }
+    case 2:
+      if fieldTypeId == thrift.STRING {
+        if err := p.ReadField2(iprot); err != nil {
+          return err
+        }
+      } else {
+        if err := iprot.Skip(fieldTypeId); err != nil {
+          return err
+        }
+      }
+    case 3:
+      if fieldTypeId == thrift.I32 {
+        if err := p.ReadField3(iprot); err != nil {
+          return err
+        }
+      } else {
+        if err := iprot.Skip(fieldTypeId); err != nil {
+          return err
+        }
+      }
+    default:
+      if err := iprot.Skip(fieldTypeId); err != nil {
+        return err
+      }
+    }
+    if err := iprot.ReadFieldEnd(); err != nil {
+      return err
+    }
+  }
+  if err := iprot.ReadStructEnd(); err != nil {
+    return thrift.PrependError(fmt.Sprintf("%T read struct end error: ", p), err)
+  }
+  return nil
+}
+
+func (p *TableKVScanArgs)  ReadField1(iprot thrift.TProtocol) error {
+  if v, err := iprot.ReadBinary(); err != nil {
+  return thrift.PrependError("error reading field 1: ", err)
+} else {
+  p.KeyStart = v
+}
+  return nil
+}
+
+func (p *TableKVScanArgs)  ReadField2(iprot thrift.TProtocol) error {
+  if v, err := iprot.ReadBinary(); err != nil {
+  return thrift.PrependError("error reading field 2: ", err)
+} else {
+  p.KeyEnd = v
+}
+  return nil
+}
+
+func (p *TableKVScanArgs)  ReadField3(iprot thrift.TProtocol) error {
+  if v, err := iprot.ReadI32(); err != nil {
+  return thrift.PrependError("error reading field 3: ", err)
+} else {
+  p.Limit = v
+}
+  return nil
+}
+
+func (p *TableKVScanArgs) Write(oprot thrift.TProtocol) error {
+  if err := oprot.WriteStructBegin("Scan_args"); err != nil {
+    return thrift.PrependError(fmt.Sprintf("%T write struct begin error: ", p), err) }
+  if p != nil {
+    if err := p.writeField1(oprot); err != nil { return err }
+    if err := p.writeField2(oprot); err != nil { return err }
+    if err := p.writeField3(oprot); err != nil { return err }
+  }
+  if err := oprot.WriteFieldStop(); err != nil {
+    return thrift.PrependError("write field stop error: ", err) }
+  if err := oprot.WriteStructEnd(); err != nil {
+    return thrift.PrependError("write struct stop error: ", err) }
+  return nil
+}
+
+func (p *TableKVScanArgs) writeField1(oprot thrift.TProtocol) (err error) {
+  if err := oprot.WriteFieldBegin("key_start", thrift.STRING, 1); err != nil {
+    return thrift.PrependError(fmt.Sprintf("%T write field begin error 1:key_start: ", p), err) }
+  if err := oprot.WriteBinary(p.KeyStart); err != nil {
+  return thrift.PrependError(fmt.Sprintf("%T.key_start (1) field write error: ", p), err) }
+  if err := oprot.WriteFieldEnd(); err != nil {
+    return thrift.PrependError(fmt.Sprintf("%T write field end error 1:key_start: ", p), err) }
+  return err
+}
+
+func (p *TableKVScanArgs) writeField2(oprot thrift.TProtocol) (err error) {
+  if err := oprot.WriteFieldBegin("key_end", thrift.STRING, 2); err != nil {
+    return thrift.PrependError(fmt.Sprintf("%T write field begin error 2:key_end: ", p), err) }
+  if err := oprot.WriteBinary(p.KeyEnd); err != nil {
+  return thrift.PrependError(fmt.Sprintf("%T.key_end (2) field write error: ", p), err) }
+  if err := oprot.WriteFieldEnd(); err != nil {
+    return thrift.PrependError(fmt.Sprintf("%T write field end error 2:key_end: ", p), err) }
+  return err
+}
+
+func (p *TableKVScanArgs) writeField3(oprot thrift.TProtocol) (err error) {
+  if err := oprot.WriteFieldBegin("limit", thrift.I32, 3); err != nil {
+    return thrift.PrependError(fmt.Sprintf("%T write field begin error 3:limit: ", p), err) }
+  if err := oprot.WriteI32(int32(p.Limit)); err != nil {
+  return thrift.PrependError(fmt.Sprintf("%T.limit (3) field write error: ", p), err) }
+  if err := oprot.WriteFieldEnd(); err != nil {
+    return thrift.PrependError(fmt.Sprintf("%T write field end error 3:limit: ", p), err) }
+  return err
+}
+
+func (p *TableKVScanArgs) String() string {
+  if p == nil {
+    return "<nil>"
+  }
+  return fmt.Sprintf("TableKVScanArgs(%+v)", *p)
+}
+
+// Attributes:
+//  - Success
+type TableKVScanResult struct {
+  Success [][][]byte `thrift:"success,0" db:"success" json:"success,omitempty"`
+}
+
+func NewTableKVScanResult() *TableKVScanResult {
+  return &TableKVScanResult{}
+}
+
+var TableKVScanResult_Success_DEFAULT [][][]byte
+
+func (p *TableKVScanResult) GetSuccess() [][][]byte {
+  return p.Success
+}
+func (p *TableKVScanResult) IsSetSuccess() bool {
+  return p.Success != nil
+}
+
+func (p *TableKVScanResult) Read(iprot thrift.TProtocol) error {
+  if _, err := iprot.ReadStructBegin(); err != nil {
+    return thrift.PrependError(fmt.Sprintf("%T read error: ", p), err)
+  }
+
+
+  for {
+    _, fieldTypeId, fieldId, err := iprot.ReadFieldBegin()
+    if err != nil {
+      return thrift.PrependError(fmt.Sprintf("%T field %d read error: ", p, fieldId), err)
+    }
+    if fieldTypeId == thrift.STOP { break; }
+    switch fieldId {
+    case 0:
+      if fieldTypeId == thrift.LIST {
+        if err := p.ReadField0(iprot); err != nil {
+          return err
+        }
+      } else {
+        if err := iprot.Skip(fieldTypeId); err != nil {
+          return err
+        }
+      }
+    default:
+      if err := iprot.Skip(fieldTypeId); err != nil {
+        return err
+      }
+    }
+    if err := iprot.ReadFieldEnd(); err != nil {
+      return err
+    }
+  }
+  if err := iprot.ReadStructEnd(); err != nil {
+    return thrift.PrependError(fmt.Sprintf("%T read struct end error: ", p), err)
+  }
+  return nil
+}
+
+func (p *TableKVScanResult)  ReadField0(iprot thrift.TProtocol) error {
+  _, size, err := iprot.ReadListBegin()
+  if err != nil {
+    return thrift.PrependError("error reading list begin: ", err)
+  }
+  tSlice := make([][][]byte, 0, size)
+  p.Success =  tSlice
+  for i := 0; i < size; i ++ {
+    _, size, err := iprot.ReadListBegin()
+    if err != nil {
+      return thrift.PrependError("error reading list begin: ", err)
+    }
+    tSlice := make([][]byte, 0, size)
+    _elem26 :=  tSlice
+    for i := 0; i < size; i ++ {
+var _elem27 []byte
+      if v, err := iprot.ReadBinary(); err != nil {
+      return thrift.PrependError("error reading field 0: ", err)
+} else {
+      _elem27 = v
+}
+      _elem26 = append(_elem26, _elem27)
+    }
+    if err := iprot.ReadListEnd(); err != nil {
+      return thrift.PrependError("error reading list end: ", err)
+    }
+    p.Success = append(p.Success, _elem26)
+  }
+  if err := iprot.ReadListEnd(); err != nil {
+    return thrift.PrependError("error reading list end: ", err)
+  }
+  return nil
+}
+
+func (p *TableKVScanResult) Write(oprot thrift.TProtocol) error {
+  if err := oprot.WriteStructBegin("Scan_result"); err != nil {
+    return thrift.PrependError(fmt.Sprintf("%T write struct begin error: ", p), err) }
+  if p != nil {
+    if err := p.writeField0(oprot); err != nil { return err }
+  }
+  if err := oprot.WriteFieldStop(); err != nil {
+    return thrift.PrependError("write field stop error: ", err) }
+  if err := oprot.WriteStructEnd(); err != nil {
+    return thrift.PrependError("write struct stop error: ", err) }
+  return nil
+}
+
+func (p *TableKVScanResult) writeField0(oprot thrift.TProtocol) (err error) {
+  if p.IsSetSuccess() {
+    if err := oprot.WriteFieldBegin("success", thrift.LIST, 0); err != nil {
+      return thrift.PrependError(fmt.Sprintf("%T write field begin error 0:success: ", p), err) }
+    if err := oprot.WriteListBegin(thrift.LIST, len(p.Success)); err != nil {
+      return thrift.PrependError("error writing list begin: ", err)
+    }
+    for _, v := range p.Success {
+      if err := oprot.WriteListBegin(thrift.STRING, len(v)); err != nil {
+        return thrift.PrependError("error writing list begin: ", err)
+      }
+      for _, v := range v {
+        if err := oprot.WriteBinary(v); err != nil {
+        return thrift.PrependError(fmt.Sprintf("%T. (0) field write error: ", p), err) }
+      }
+      if err := oprot.WriteListEnd(); err != nil {
+        return thrift.PrependError("error writing list end: ", err)
+      }
+    }
+    if err := oprot.WriteListEnd(); err != nil {
+      return thrift.PrependError("error writing list end: ", err)
+    }
+    if err := oprot.WriteFieldEnd(); err != nil {
+      return thrift.PrependError(fmt.Sprintf("%T write field end error 0:success: ", p), err) }
+  }
+  return err
+}
+
+func (p *TableKVScanResult) String() string {
+  if p == nil {
+    return "<nil>"
+  }
+  return fmt.Sprintf("TableKVScanResult(%+v)", *p)
+}
+
+// Attributes:
+//  - KeyStart
+//  - KeyEnd
+//  - Limit
+type TableKVScanMapArgs struct {
+  KeyStart []byte `thrift:"key_start,1" db:"key_start" json:"key_start"`
+  KeyEnd []byte `thrift:"key_end,2" db:"key_end" json:"key_end"`
+  Limit int32 `thrift:"limit,3" db:"limit" json:"limit"`
+}
+
+func NewTableKVScanMapArgs() *TableKVScanMapArgs {
+  return &TableKVScanMapArgs{}
+}
+
+
+func (p *TableKVScanMapArgs) GetKeyStart() []byte {
+  return p.KeyStart
+}
+
+func (p *TableKVScanMapArgs) GetKeyEnd() []byte {
+  return p.KeyEnd
+}
+
+func (p *TableKVScanMapArgs) GetLimit() int32 {
+  return p.Limit
+}
+func (p *TableKVScanMapArgs) Read(iprot thrift.TProtocol) error {
+  if _, err := iprot.ReadStructBegin(); err != nil {
+    return thrift.PrependError(fmt.Sprintf("%T read error: ", p), err)
+  }
+
+
+  for {
+    _, fieldTypeId, fieldId, err := iprot.ReadFieldBegin()
+    if err != nil {
+      return thrift.PrependError(fmt.Sprintf("%T field %d read error: ", p, fieldId), err)
+    }
+    if fieldTypeId == thrift.STOP { break; }
+    switch fieldId {
+    case 1:
+      if fieldTypeId == thrift.STRING {
+        if err := p.ReadField1(iprot); err != nil {
+          return err
+        }
+      } else {
+        if err := iprot.Skip(fieldTypeId); err != nil {
+          return err
+        }
+      }
+    case 2:
+      if fieldTypeId == thrift.STRING {
+        if err := p.ReadField2(iprot); err != nil {
+          return err
+        }
+      } else {
+        if err := iprot.Skip(fieldTypeId); err != nil {
+          return err
+        }
+      }
+    case 3:
+      if fieldTypeId == thrift.I32 {
+        if err := p.ReadField3(iprot); err != nil {
+          return err
+        }
+      } else {
+        if err := iprot.Skip(fieldTypeId); err != nil {
+          return err
+        }
+      }
+    default:
+      if err := iprot.Skip(fieldTypeId); err != nil {
+        return err
+      }
+    }
+    if err := iprot.ReadFieldEnd(); err != nil {
+      return err
+    }
+  }
+  if err := iprot.ReadStructEnd(); err != nil {
+    return thrift.PrependError(fmt.Sprintf("%T read struct end error: ", p), err)
+  }
+  return nil
+}
+
+func (p *TableKVScanMapArgs)  ReadField1(iprot thrift.TProtocol) error {
+  if v, err := iprot.ReadBinary(); err != nil {
+  return thrift.PrependError("error reading field 1: ", err)
+} else {
+  p.KeyStart = v
+}
+  return nil
+}
+
+func (p *TableKVScanMapArgs)  ReadField2(iprot thrift.TProtocol) error {
+  if v, err := iprot.ReadBinary(); err != nil {
+  return thrift.PrependError("error reading field 2: ", err)
+} else {
+  p.KeyEnd = v
+}
+  return nil
+}
+
+func (p *TableKVScanMapArgs)  ReadField3(iprot thrift.TProtocol) error {
+  if v, err := iprot.ReadI32(); err != nil {
+  return thrift.PrependError("error reading field 3: ", err)
+} else {
+  p.Limit = v
+}
+  return nil
+}
+
+func (p *TableKVScanMapArgs) Write(oprot thrift.TProtocol) error {
+  if err := oprot.WriteStructBegin("ScanMap_args"); err != nil {
+    return thrift.PrependError(fmt.Sprintf("%T write struct begin error: ", p), err) }
+  if p != nil {
+    if err := p.writeField1(oprot); err != nil { return err }
+    if err := p.writeField2(oprot); err != nil { return err }
+    if err := p.writeField3(oprot); err != nil { return err }
+  }
+  if err := oprot.WriteFieldStop(); err != nil {
+    return thrift.PrependError("write field stop error: ", err) }
+  if err := oprot.WriteStructEnd(); err != nil {
+    return thrift.PrependError("write struct stop error: ", err) }
+  return nil
+}
+
+func (p *TableKVScanMapArgs) writeField1(oprot thrift.TProtocol) (err error) {
+  if err := oprot.WriteFieldBegin("key_start", thrift.STRING, 1); err != nil {
+    return thrift.PrependError(fmt.Sprintf("%T write field begin error 1:key_start: ", p), err) }
+  if err := oprot.WriteBinary(p.KeyStart); err != nil {
+  return thrift.PrependError(fmt.Sprintf("%T.key_start (1) field write error: ", p), err) }
+  if err := oprot.WriteFieldEnd(); err != nil {
+    return thrift.PrependError(fmt.Sprintf("%T write field end error 1:key_start: ", p), err) }
+  return err
+}
+
+func (p *TableKVScanMapArgs) writeField2(oprot thrift.TProtocol) (err error) {
+  if err := oprot.WriteFieldBegin("key_end", thrift.STRING, 2); err != nil {
+    return thrift.PrependError(fmt.Sprintf("%T write field begin error 2:key_end: ", p), err) }
+  if err := oprot.WriteBinary(p.KeyEnd); err != nil {
+  return thrift.PrependError(fmt.Sprintf("%T.key_end (2) field write error: ", p), err) }
+  if err := oprot.WriteFieldEnd(); err != nil {
+    return thrift.PrependError(fmt.Sprintf("%T write field end error 2:key_end: ", p), err) }
+  return err
+}
+
+func (p *TableKVScanMapArgs) writeField3(oprot thrift.TProtocol) (err error) {
+  if err := oprot.WriteFieldBegin("limit", thrift.I32, 3); err != nil {
+    return thrift.PrependError(fmt.Sprintf("%T write field begin error 3:limit: ", p), err) }
+  if err := oprot.WriteI32(int32(p.Limit)); err != nil {
+  return thrift.PrependError(fmt.Sprintf("%T.limit (3) field write error: ", p), err) }
+  if err := oprot.WriteFieldEnd(); err != nil {
+    return thrift.PrependError(fmt.Sprintf("%T write field end error 3:limit: ", p), err) }
+  return err
+}
+
+func (p *TableKVScanMapArgs) String() string {
+  if p == nil {
+    return "<nil>"
+  }
+  return fmt.Sprintf("TableKVScanMapArgs(%+v)", *p)
+}
+
+// Attributes:
+//  - Success
+type TableKVScanMapResult struct {
+  Success map[string][]byte `thrift:"success,0" db:"success" json:"success,omitempty"`
+}
+
+func NewTableKVScanMapResult() *TableKVScanMapResult {
+  return &TableKVScanMapResult{}
+}
+
+var TableKVScanMapResult_Success_DEFAULT map[string][]byte
+
+func (p *TableKVScanMapResult) GetSuccess() map[string][]byte {
+  return p.Success
+}
+func (p *TableKVScanMapResult) IsSetSuccess() bool {
+  return p.Success != nil
+}
+
+func (p *TableKVScanMapResult) Read(iprot thrift.TProtocol) error {
+  if _, err := iprot.ReadStructBegin(); err != nil {
+    return thrift.PrependError(fmt.Sprintf("%T read error: ", p), err)
+  }
+
+
+  for {
+    _, fieldTypeId, fieldId, err := iprot.ReadFieldBegin()
+    if err != nil {
+      return thrift.PrependError(fmt.Sprintf("%T field %d read error: ", p, fieldId), err)
+    }
+    if fieldTypeId == thrift.STOP { break; }
+    switch fieldId {
+    case 0:
+      if fieldTypeId == thrift.MAP {
+        if err := p.ReadField0(iprot); err != nil {
+          return err
+        }
+      } else {
+        if err := iprot.Skip(fieldTypeId); err != nil {
+          return err
+        }
+      }
+    default:
+      if err := iprot.Skip(fieldTypeId); err != nil {
+        return err
+      }
+    }
+    if err := iprot.ReadFieldEnd(); err != nil {
+      return err
+    }
+  }
+  if err := iprot.ReadStructEnd(); err != nil {
+    return thrift.PrependError(fmt.Sprintf("%T read struct end error: ", p), err)
+  }
+  return nil
+}
+
+func (p *TableKVScanMapResult)  ReadField0(iprot thrift.TProtocol) error {
+  _, _, size, err := iprot.ReadMapBegin()
+  if err != nil {
+    return thrift.PrependError("error reading map begin: ", err)
+  }
+  tMap := make(map[string][]byte, size)
+  p.Success =  tMap
+  for i := 0; i < size; i ++ {
+var _key28 string
+    if v, err := iprot.ReadString(); err != nil {
+    return thrift.PrependError("error reading field 0: ", err)
+} else {
+    _key28 = v
+}
+var _val29 []byte
+    if v, err := iprot.ReadBinary(); err != nil {
+    return thrift.PrependError("error reading field 0: ", err)
+} else {
+    _val29 = v
+}
+    p.Success[_key28] = _val29
+  }
+  if err := iprot.ReadMapEnd(); err != nil {
+    return thrift.PrependError("error reading map end: ", err)
+  }
+  return nil
+}
+
+func (p *TableKVScanMapResult) Write(oprot thrift.TProtocol) error {
+  if err := oprot.WriteStructBegin("ScanMap_result"); err != nil {
+    return thrift.PrependError(fmt.Sprintf("%T write struct begin error: ", p), err) }
+  if p != nil {
+    if err := p.writeField0(oprot); err != nil { return err }
+  }
+  if err := oprot.WriteFieldStop(); err != nil {
+    return thrift.PrependError("write field stop error: ", err) }
+  if err := oprot.WriteStructEnd(); err != nil {
+    return thrift.PrependError("write struct stop error: ", err) }
+  return nil
+}
+
+func (p *TableKVScanMapResult) writeField0(oprot thrift.TProtocol) (err error) {
+  if p.IsSetSuccess() {
+    if err := oprot.WriteFieldBegin("success", thrift.MAP, 0); err != nil {
+      return thrift.PrependError(fmt.Sprintf("%T write field begin error 0:success: ", p), err) }
+    if err := oprot.WriteMapBegin(thrift.STRING, thrift.STRING, len(p.Success)); err != nil {
+      return thrift.PrependError("error writing map begin: ", err)
+    }
+    for k, v := range p.Success {
+      if err := oprot.WriteString(string(k)); err != nil {
+      return thrift.PrependError(fmt.Sprintf("%T. (0) field write error: ", p), err) }
+      if err := oprot.WriteBinary(v); err != nil {
+      return thrift.PrependError(fmt.Sprintf("%T. (0) field write error: ", p), err) }
+    }
+    if err := oprot.WriteMapEnd(); err != nil {
+      return thrift.PrependError("error writing map end: ", err)
+    }
+    if err := oprot.WriteFieldEnd(); err != nil {
+      return thrift.PrependError(fmt.Sprintf("%T write field end error 0:success: ", p), err) }
+  }
+  return err
+}
+
+func (p *TableKVScanMapResult) String() string {
+  if p == nil {
+    return "<nil>"
+  }
+  return fmt.Sprintf("TableKVScanMapResult(%+v)", *p)
 }
 
 type TableKVQGetArgs struct {
@@ -1919,13 +2654,13 @@ func (p *TableKVBatchQSetArgs)  ReadField1(iprot thrift.TProtocol) error {
   tSlice := make([][]byte, 0, size)
   p.Value =  tSlice
   for i := 0; i < size; i ++ {
-var _elem22 []byte
+var _elem30 []byte
     if v, err := iprot.ReadBinary(); err != nil {
     return thrift.PrependError("error reading field 0: ", err)
 } else {
-    _elem22 = v
+    _elem30 = v
 }
-    p.Value = append(p.Value, _elem22)
+    p.Value = append(p.Value, _elem30)
   }
   if err := iprot.ReadListEnd(); err != nil {
     return thrift.PrependError("error reading list end: ", err)
@@ -2025,7 +2760,7 @@ func (p *TableKVBatchQSetResult) String() string {
 // Attributes:
 //  - Size
 type TableKVBatchQGetArgs struct {
-  Size int16 `thrift:"size,1" db:"size" json:"size"`
+  Size int32 `thrift:"size,1" db:"size" json:"size"`
 }
 
 func NewTableKVBatchQGetArgs() *TableKVBatchQGetArgs {
@@ -2033,7 +2768,7 @@ func NewTableKVBatchQGetArgs() *TableKVBatchQGetArgs {
 }
 
 
-func (p *TableKVBatchQGetArgs) GetSize() int16 {
+func (p *TableKVBatchQGetArgs) GetSize() int32 {
   return p.Size
 }
 func (p *TableKVBatchQGetArgs) Read(iprot thrift.TProtocol) error {
@@ -2050,7 +2785,7 @@ func (p *TableKVBatchQGetArgs) Read(iprot thrift.TProtocol) error {
     if fieldTypeId == thrift.STOP { break; }
     switch fieldId {
     case 1:
-      if fieldTypeId == thrift.I16 {
+      if fieldTypeId == thrift.I32 {
         if err := p.ReadField1(iprot); err != nil {
           return err
         }
@@ -2075,7 +2810,7 @@ func (p *TableKVBatchQGetArgs) Read(iprot thrift.TProtocol) error {
 }
 
 func (p *TableKVBatchQGetArgs)  ReadField1(iprot thrift.TProtocol) error {
-  if v, err := iprot.ReadI16(); err != nil {
+  if v, err := iprot.ReadI32(); err != nil {
   return thrift.PrependError("error reading field 1: ", err)
 } else {
   p.Size = v
@@ -2097,9 +2832,9 @@ func (p *TableKVBatchQGetArgs) Write(oprot thrift.TProtocol) error {
 }
 
 func (p *TableKVBatchQGetArgs) writeField1(oprot thrift.TProtocol) (err error) {
-  if err := oprot.WriteFieldBegin("size", thrift.I16, 1); err != nil {
+  if err := oprot.WriteFieldBegin("size", thrift.I32, 1); err != nil {
     return thrift.PrependError(fmt.Sprintf("%T write field begin error 1:size: ", p), err) }
-  if err := oprot.WriteI16(int16(p.Size)); err != nil {
+  if err := oprot.WriteI32(int32(p.Size)); err != nil {
   return thrift.PrependError(fmt.Sprintf("%T.size (1) field write error: ", p), err) }
   if err := oprot.WriteFieldEnd(); err != nil {
     return thrift.PrependError(fmt.Sprintf("%T write field end error 1:size: ", p), err) }
@@ -2113,11 +2848,23 @@ func (p *TableKVBatchQGetArgs) String() string {
   return fmt.Sprintf("TableKVBatchQGetArgs(%+v)", *p)
 }
 
+// Attributes:
+//  - Success
 type TableKVBatchQGetResult struct {
+  Success [][]byte `thrift:"success,0" db:"success" json:"success,omitempty"`
 }
 
 func NewTableKVBatchQGetResult() *TableKVBatchQGetResult {
   return &TableKVBatchQGetResult{}
+}
+
+var TableKVBatchQGetResult_Success_DEFAULT [][]byte
+
+func (p *TableKVBatchQGetResult) GetSuccess() [][]byte {
+  return p.Success
+}
+func (p *TableKVBatchQGetResult) IsSetSuccess() bool {
+  return p.Success != nil
 }
 
 func (p *TableKVBatchQGetResult) Read(iprot thrift.TProtocol) error {
@@ -2132,8 +2879,21 @@ func (p *TableKVBatchQGetResult) Read(iprot thrift.TProtocol) error {
       return thrift.PrependError(fmt.Sprintf("%T field %d read error: ", p, fieldId), err)
     }
     if fieldTypeId == thrift.STOP { break; }
-    if err := iprot.Skip(fieldTypeId); err != nil {
-      return err
+    switch fieldId {
+    case 0:
+      if fieldTypeId == thrift.LIST {
+        if err := p.ReadField0(iprot); err != nil {
+          return err
+        }
+      } else {
+        if err := iprot.Skip(fieldTypeId); err != nil {
+          return err
+        }
+      }
+    default:
+      if err := iprot.Skip(fieldTypeId); err != nil {
+        return err
+      }
     }
     if err := iprot.ReadFieldEnd(); err != nil {
       return err
@@ -2145,16 +2905,59 @@ func (p *TableKVBatchQGetResult) Read(iprot thrift.TProtocol) error {
   return nil
 }
 
+func (p *TableKVBatchQGetResult)  ReadField0(iprot thrift.TProtocol) error {
+  _, size, err := iprot.ReadListBegin()
+  if err != nil {
+    return thrift.PrependError("error reading list begin: ", err)
+  }
+  tSlice := make([][]byte, 0, size)
+  p.Success =  tSlice
+  for i := 0; i < size; i ++ {
+var _elem31 []byte
+    if v, err := iprot.ReadBinary(); err != nil {
+    return thrift.PrependError("error reading field 0: ", err)
+} else {
+    _elem31 = v
+}
+    p.Success = append(p.Success, _elem31)
+  }
+  if err := iprot.ReadListEnd(); err != nil {
+    return thrift.PrependError("error reading list end: ", err)
+  }
+  return nil
+}
+
 func (p *TableKVBatchQGetResult) Write(oprot thrift.TProtocol) error {
   if err := oprot.WriteStructBegin("BatchQGet_result"); err != nil {
     return thrift.PrependError(fmt.Sprintf("%T write struct begin error: ", p), err) }
   if p != nil {
+    if err := p.writeField0(oprot); err != nil { return err }
   }
   if err := oprot.WriteFieldStop(); err != nil {
     return thrift.PrependError("write field stop error: ", err) }
   if err := oprot.WriteStructEnd(); err != nil {
     return thrift.PrependError("write struct stop error: ", err) }
   return nil
+}
+
+func (p *TableKVBatchQGetResult) writeField0(oprot thrift.TProtocol) (err error) {
+  if p.IsSetSuccess() {
+    if err := oprot.WriteFieldBegin("success", thrift.LIST, 0); err != nil {
+      return thrift.PrependError(fmt.Sprintf("%T write field begin error 0:success: ", p), err) }
+    if err := oprot.WriteListBegin(thrift.STRING, len(p.Success)); err != nil {
+      return thrift.PrependError("error writing list begin: ", err)
+    }
+    for _, v := range p.Success {
+      if err := oprot.WriteBinary(v); err != nil {
+      return thrift.PrependError(fmt.Sprintf("%T. (0) field write error: ", p), err) }
+    }
+    if err := oprot.WriteListEnd(); err != nil {
+      return thrift.PrependError("error writing list end: ", err)
+    }
+    if err := oprot.WriteFieldEnd(); err != nil {
+      return thrift.PrependError(fmt.Sprintf("%T write field end error 0:success: ", p), err) }
+  }
+  return err
 }
 
 func (p *TableKVBatchQGetResult) String() string {

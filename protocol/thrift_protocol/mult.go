@@ -8,6 +8,7 @@ import (
 	"strings"
 
 	"github.com/seefan/tablekv/common"
+	"sync"
 )
 
 const (
@@ -23,6 +24,7 @@ type MultiplexedProcessor struct {
 	thrift.TMultiplexedProcessor
 	serviceProcessorMap map[string]thrift.TProcessor
 	processorManager common.GetProcessor
+	lock sync.Mutex
 }
 
 func (t *MultiplexedProcessor) Process(ctx context.Context, in, out thrift.TProtocol) (bool, thrift.TException) {
@@ -40,6 +42,7 @@ func (t *MultiplexedProcessor) Process(ctx context.Context, in, out thrift.TProt
 	}
 	actualProcessor, ok := t.serviceProcessorMap[v[0]]
 	if !ok {
+		t.lock.Lock()
 		tp,err:=t.processorManager.GetProcessor(v[0])
 		if err!=nil{
 			return false,goerr.New("Table name not found")
@@ -48,6 +51,7 @@ func (t *MultiplexedProcessor) Process(ctx context.Context, in, out thrift.TProt
 			p:tp,
 		})
 		t.serviceProcessorMap[v[0]]=actualProcessor
+		t.lock.Unlock()
 	}
 
 	smb := thrift.NewStoredMessageProtocol(in, v[1], typeId, seqid)

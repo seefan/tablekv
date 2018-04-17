@@ -2,8 +2,15 @@ package tables
 
 import (
 	"time"
-	"encoding/json"
 	"sync"
+	"fmt"
+	"strings"
+	"strconv"
+	"github.com/seefan/goerr"
+)
+
+const (
+	MinTimeFormat = "20060102150405"
 )
 
 type TableInfo struct {
@@ -11,32 +18,36 @@ type TableInfo struct {
 	CreateTime time.Time
 	Host       string
 	//only for queue,max id
-	QueueId int64
+	queueId uint32
 	lock    sync.Mutex
 }
 
 func (t *TableInfo) ToByte() []byte {
-	if bs, err := json.Marshal(t); err == nil {
-		return bs
-	} else {
-		return nil
-	}
+	return []byte(fmt.Sprintf("%s:%s:%s:%x", t.Name, t.Host, t.CreateTime.Format(MinTimeFormat), t.queueId))
 }
 func (t *TableInfo) FromByte(bs []byte) error {
-	tmp := new(TableInfo)
-	if err := json.Unmarshal(bs, tmp); err != nil {
-		return err
-	} else {
-		t.Host = tmp.Host
-		t.Name = tmp.Name
-		t.CreateTime = tmp.CreateTime
-		t.QueueId = tmp.QueueId
+	ss := strings.Split(string(bs), ":")
+	if len(ss) == 4 {
+		t.Name = ss[0]
+		t.Host = ss[1]
+		if tt, err := time.Parse(MinTimeFormat, ss[2]); err != nil {
+			return err
+		} else {
+			t.CreateTime = tt
+		}
+		if tt, err := strconv.ParseInt(ss[3], 16, 10); err != nil {
+			return err
+		} else {
+			t.queueId = uint32(tt)
+		}
 		return nil
+	} else {
+		return goerr.New("error cdb data:%s", bs)
 	}
 }
-func (t *TableInfo) GetQueueId() int64 {
+func (t *TableInfo) GetQueueId() uint32 {
 	t.lock.Lock()
 	defer t.lock.Unlock()
-	t.QueueId += 1
-	return t.QueueId
+	t.queueId += 1
+	return t.queueId
 }

@@ -74,24 +74,47 @@ func (t *ThriftProcessor) BatchSet(ctx context.Context, keys [][]byte, values []
 	return t.p.BatchSet(keys, values)
 }
 
+func (t *ThriftProcessor) ScanMap(ctx context.Context, key_start []byte, key_end []byte, limit int32) (r map[string][]byte, err error) {
+	if ks, vs, err := t.p.Scan(key_start, key_end, int(limit)); err == nil {
+		r = make(map[string][]byte)
+		for i, k := range ks {
+			r[string(k)] = []byte(vs[i])
+		}
+	}
+	return
+}
+
+// Parameters:
+//  - KeyStart
+//  - KeyEnd
+//  - Limit
+func (t *ThriftProcessor)Scan(ctx context.Context,key_start []byte, key_end []byte, limit int32) (r [][][]byte, err error) {
+	if ks, vs, err := t.p.Scan(key_start, key_end, int(limit)); err == nil {
+		for i, k := range ks {
+			r = append(r, [][]byte{k, vs[i]})
+		}
+	}
+	return
+}
+
 func (t *ThriftProcessor) QGet(ctx context.Context) (r []byte, err error) {
-	return nil, nil
+	return t.p.QGet()
 }
 
 // Parameters:
 //  - Value
 func (t *ThriftProcessor) QSet(ctx context.Context, value []byte) (err error) {
-	return nil
+	return t.p.QSet(value)
 }
 
 // Parameters:
 //  - Value
 func (t *ThriftProcessor) BatchQSet(ctx context.Context, value [][]byte) (err error) {
-	return nil
+	return t.p.BatchQSet(value)
 }
 
 // Parameters:
 //  - Size
-func (t *ThriftProcessor) BatchQGet(ctx context.Context, size int16) (err error) {
-	return nil
+func (t *ThriftProcessor) BatchQGet(ctx context.Context, size int32) (r [][]byte, err error) {
+	return t.p.BatchQGet(int(size))
 }

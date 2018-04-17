@@ -16,6 +16,7 @@ import (
 
 func main() {
 	defer common.PrintErr()
+
 	confPath := flag.String("config", "./conf.ini", "conf.ini path")
 	b := &boot.Boot{}
 	cfg := b.LoadConfig(*confPath)
@@ -75,7 +76,7 @@ func start(cfg *common.Config, b *boot.Boot) {
 	}
 	s := <-sig
 
-	seelog.Info("received signal ", s)
+	seelog.Info("received signal:", s)
 	if err := b.Close(); err != nil {
 		seelog.Error("TableKV close has error", err)
 	} else {
