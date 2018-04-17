@@ -14,6 +14,9 @@ TableKV 基于leveldb，实现了分区的KV库，网络协议采用聚合方式
 * 支持分布式
 * 支持同步和备份
 
+### 基本要求
+* 分区名仅支持英文字母和数字，不能包括其它特殊的字符。
+
 # TableKV
 TableKV implements partitioned KV library based on level db. the network protocol adopts aggregation method. At present, TableKV supports thrift, gRPC and so on, and naturally supports multilingual development.
 
@@ -30,3 +33,5 @@ Source: there is a project that has a lot of data input and deletion every day, 
 * support for distributed
 * support for synchronization and backup
 
+### Requirements
+* Partition names only support English letters and numbers , and cannot include other special characters .
