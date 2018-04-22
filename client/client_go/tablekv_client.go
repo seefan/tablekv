@@ -37,9 +37,19 @@ func (t *TablePool) Close() {
 	t.pool.Close()
 }
 
+//run function
+func (t *TablePool) Call(f func(c *TableKVClient) error) error {
+	client, err := t.pool.Get()
+	if err != nil {
+		return err
+	}
+	defer t.pool.Set(client)
+	return f(client.Client.(*TableKVClient))
+}
+
 type TableKVClient struct {
 	trans  thrift.TTransport
-	client *thrift_protocol.TableKVClient
+	Client *thrift_protocol.TableKVClient
 	host   string
 	port   int
 	name   string
@@ -60,7 +70,7 @@ func (t *TableKVClient) Start() (err error) {
 	}
 	bpt := thrift.NewTBinaryProtocolTransport(t.trans)
 	mp := thrift.NewTMultiplexedProtocol(bpt, t.name)
-	t.client = thrift_protocol.NewTableKVClient(thrift.NewTStandardClient(mp, mp))
+	t.Client = thrift_protocol.NewTableKVClient(thrift.NewTStandardClient(mp, mp))
 	return
 }
 
@@ -86,7 +96,7 @@ func (t *TableKVClient) IsOpen() bool {
 // 返回，bool。如果无法访问服务器，就返回false。
 func (t *TableKVClient) Ping() bool {
 	if t.IsOpen() {
-		if _, err := t.client.Ping(context.Background()); err == nil {
+		if _, err := t.Client.Ping(context.Background()); err == nil {
 			return true
 		}
 	}
