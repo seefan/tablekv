@@ -3,55 +3,64 @@ package client_go
 import (
 	"github.com/seefan/gopool"
 	"fmt"
-	"net"
 	"git.apache.org/thrift.git/lib/go/thrift"
 	"github.com/seefan/tablekv/protocol/thrift_protocol"
 	"context"
 )
 
-var (
-	pool = gopool.NewPool()
-	Host = "127.0.0.1"
-	Port = "12321"
-)
+type TablePool struct {
+	pool      *gopool.Pool
+	host      string
+	port      int
+	tableName string
+}
 
-func init() {
-	pool.NewClient = func() gopool.IClient {
-		return &TableKVClient{}
+func NewTablePool(name, host string, port int) *TablePool {
+	return &TablePool{
+		pool:      gopool.NewPool(),
+		host:      host,
+		port:      port,
+		tableName: name,
 	}
 }
-func Start() error {
-	return pool.Start()
-}
-func Close() {
-	if pool != nil {
-		pool.Close()
+func (t *TablePool) Start() error {
+	t.pool.NewClient = func() gopool.IClient {
+		return &TableKVClient{
+			host: t.host,
+			port: t.port,
+			name: t.tableName,
+		}
 	}
+	return t.Start()
+}
+func (t *TablePool) Close() {
+	t.pool.Close()
 }
 
 type TableKVClient struct {
-	trans           thrift.TTransport
-	protocolFactory thrift.TProtocolFactory
-	client          *thrift_protocol.TableKVClient
+	trans  thrift.TTransport
+	client *thrift_protocol.TableKVClient
+	host   string
+	port   int
+	name   string
 }
 
 //打开连接
 //
 // 返回，error。如果连接到服务器时出错，就返回错误信息，否则返回nil
 func (t *TableKVClient) Start() (err error) {
-	trans, err := thrift.NewTSocket(net.JoinHostPort(Host, Port))
+	trans, err := thrift.NewTSocket(fmt.Sprintf("%s:%d", t.host, t.port))
 	if err != nil {
-		return fmt.Errorf("error resolving address:", err)
+		return fmt.Errorf("error resolving address %s:%d %v", t.host, t.port, err)
 	}
 	t.trans = thrift.NewTFramedTransport(trans)
 	err = t.trans.Open()
 	if err != nil {
 		return
 	}
-	t.protocolFactory = thrift.NewTBinaryProtocolFactoryDefault()
-	iprot := t.protocolFactory.GetProtocol(t.trans)
-	oprot := t.protocolFactory.GetProtocol(t.trans)
-	t.client = thrift_protocol.NewTableKVClient(thrift.NewTStandardClient(iprot, oprot))
+	bpt := thrift.NewTBinaryProtocolTransport(t.trans)
+	mp := thrift.NewTMultiplexedProtocol(bpt, t.name)
+	t.client = thrift_protocol.NewTableKVClient(thrift.NewTStandardClient(mp, mp))
 	return
 }
 
