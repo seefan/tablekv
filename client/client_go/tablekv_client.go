@@ -47,6 +47,13 @@ func (t *TablePool) Call(f func(c *TableKVClient) error) error {
 	return f(client.Client.(*TableKVClient))
 }
 
+func (t *TablePool) Get() (*gopool.PooledClient, error) {
+	return t.pool.Get()
+}
+func (t *TablePool) Set(c *gopool.PooledClient) {
+	t.pool.Set(c)
+}
+
 type TableKVClient struct {
 	trans  thrift.TTransport
 	Client *thrift_protocol.TableKVClient
