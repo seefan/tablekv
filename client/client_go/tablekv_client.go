@@ -47,11 +47,27 @@ func (t *TablePool) Call(f func(c *TableKVClient) error) error {
 	return f(client.Client.(*TableKVClient))
 }
 
-func (t *TablePool) Get() (*gopool.PooledClient, error) {
-	return t.pool.Get()
+func (t *TablePool) Get() (*Client, error) {
+	if pc, err := t.pool.Get(); err != nil {
+		return nil, err
+	} else {
+		return &Client{
+			pc: pc,
+			tp: t,
+		}, nil
+	}
 }
-func (t *TablePool) Set(c *gopool.PooledClient) {
-	t.pool.Set(c)
+
+type Client struct {
+	pc *gopool.PooledClient
+	tp *TablePool
+}
+
+func (c *Client) Client() *TableKVClient {
+	return c.pc.Client.(*TableKVClient)
+}
+func (c *Client) Close() {
+	c.tp.pool.Set(c.pc)
 }
 
 type TableKVClient struct {
@@ -60,6 +76,7 @@ type TableKVClient struct {
 	host   string
 	port   int
 	name   string
+	pc     *gopool.PooledClient
 }
 
 //打开连接
