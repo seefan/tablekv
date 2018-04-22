@@ -16,13 +16,17 @@ type Config struct {
 	LogPath string
 	//is master db
 	IsMaster bool
-	//The expiration time of the table in days
+	//connect timeout,0 is none
 	Timeout int
+	//The num of expiration time
+	ExpiredNum int
 	// The expiration type
-	//0 按小时过期 1 按天过期
-	TimeoutType int
-	//Write buffer in Mbs,default is 256mb
+	//0 none 1 hour 2 day
+	ExpiredType int
+	//Write buffer in Mbs,default is 64mb
 	WriteBuffer int
+	//Block buffer in Mbs,default is 64mb
+	BlockBuffer int
 }
 
 //load config and set default value
@@ -34,9 +38,11 @@ func (c *Config) Load(f *ini.File) {
 	c.Port = f.Section("main").Key("port").MustInt(12321)
 	c.VarPath = f.Section("main").Key("var").MustString("./var")
 	c.LogPath = f.Section("main").Key("log").MustString("./log")
-	c.Timeout = f.Section("main").Key("timeout").MustInt(1)
-	c.TimeoutType = f.Section("main").Key("timeout_type").MustInt(1)
-	c.WriteBuffer = f.Section("main").Key("write_buffer").MustInt(256)
+	c.Timeout = f.Section("main").Key("timeout").MustInt(0)
+	c.ExpiredNum = f.Section("main").Key("expired_num").MustInt(0)
+	c.ExpiredType = f.Section("main").Key("expired_type").MustInt(0)
+	c.WriteBuffer = f.Section("main").Key("write_buffer").MustInt(64)
+	c.BlockBuffer = f.Section("main").Key("block_buffer").MustInt(64)
 }
 
 //config value to string

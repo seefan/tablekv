@@ -11,7 +11,7 @@ import (
 )
 
 var (
-	logText = `<seelog type="asynctimer" asyncinterval="5000000" minlevel="debug" maxlevel="error">
+	logText = `<seelog type="asynctimer" asyncinterval="5000000" minlevel="debug">
 	<outputs formatid="main">
 		<console/>
 		<rollingfile type="size" filename="__log_url__" maxsize="1024000" maxrolls="10" />

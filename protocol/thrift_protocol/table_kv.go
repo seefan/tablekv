@@ -5,14 +5,15 @@ import (
 	"git.apache.org/thrift.git/lib/go/thrift"
 	"context"
 	"github.com/seefan/tablekv/common"
+	"time"
 )
 
 type Thrift struct {
 	server *thrift.TSimpleServer
 }
 
-func (t *Thrift) Start(pm common.GetProcessor, host string, port int) error {
-	socket, err := thrift.NewTServerSocket(fmt.Sprintf("%s:%d", host, port))
+func (t *Thrift) Start(pm common.GetProcessor, host string, port int, timeout int) error {
+	socket, err := thrift.NewTServerSocketTimeout(fmt.Sprintf("%s:%d", host, port), time.Duration(0)*time.Second)
 	if err != nil {
 		return err
 	}
@@ -88,7 +89,7 @@ func (t *ThriftProcessor) ScanMap(ctx context.Context, key_start []byte, key_end
 //  - KeyStart
 //  - KeyEnd
 //  - Limit
-func (t *ThriftProcessor)Scan(ctx context.Context,key_start []byte, key_end []byte, limit int32) (r [][][]byte, err error) {
+func (t *ThriftProcessor) Scan(ctx context.Context, key_start []byte, key_end []byte, limit int32) (r [][][]byte, err error) {
 	if ks, vs, err := t.p.Scan(key_start, key_end, int(limit)); err == nil {
 		for i, k := range ks {
 			r = append(r, [][]byte{k, vs[i]})
@@ -117,4 +118,7 @@ func (t *ThriftProcessor) BatchQSet(ctx context.Context, value [][]byte) (err er
 //  - Size
 func (t *ThriftProcessor) BatchQGet(ctx context.Context, size int32) (r [][]byte, err error) {
 	return t.p.BatchQGet(int(size))
+}
+func (t *ThriftProcessor) Ping(ctx context.Context) (r bool, err error) {
+	return true, nil
 }

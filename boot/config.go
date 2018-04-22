@@ -16,16 +16,17 @@ func (b *Boot) LoadConfig(confPath string) *common.Config {
 		cfg.Load(nil)
 	}
 	common.WriteBuffer = cfg.WriteBuffer
-	switch cfg.TimeoutType {
-	case 0:
-		common.Timeout = float64(cfg.Timeout)
+	common.BlockBuffer = cfg.BlockBuffer
+	switch cfg.ExpiredType {
 	case 1:
-		common.Timeout = float64(cfg.Timeout * 24)
+		common.Expired = float64(cfg.ExpiredNum)
+	case 2:
+		common.Expired = float64(cfg.ExpiredNum * 24)
 	default:
-		common.Timeout = 1
+		common.Expired = 1
 	}
-	if common.Timeout < 1 {
-		common.Timeout = 1
+	if common.Expired < 1 {
+		common.Expired = 1
 	}
 
 	//create log  directory

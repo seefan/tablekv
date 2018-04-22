@@ -100,7 +100,9 @@ func NewTableManager(cfg *common.Config, tables []*TableInfo) (t *TableManager) 
 			log.Error("MkdirAll error", err)
 		}
 	}
-	go t.timeProcessor()
+	if cfg.ExpiredType > 0 {
+		go t.timeProcessor()
+	}
 	if tables == nil {
 		return
 	}

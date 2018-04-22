@@ -12,4 +12,5 @@ service TableKV{
     void QSet(1:binary value),
     void BatchQSet(1:list<binary> value),
     list<binary> BatchQGet(1:i32 size),
+    bool ping()
 }

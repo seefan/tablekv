@@ -13,7 +13,7 @@ func (t *TableManager) timeProcessor() {
 	for range t.timer.C {
 		var ts []string
 		for k, tab := range t.tableMap {
-			if time.Since(tab.CreateTime).Hours() > common.Timeout {
+			if time.Since(tab.CreateTime).Hours() > common.Expired {
 				ts = append(ts, k)
 			}
 		}
@@ -26,7 +26,6 @@ func (t *TableManager) timeProcessor() {
 		}
 		log.Debugf("online table count is %d,running time is %s.", len(t.tableMap), time.Since(t.now).String())
 		for name, tb := range t.tableMap {
-
 			var bs bytes.Buffer
 			for k, v := range tb.Info() {
 				bs.WriteString(k)
@@ -34,7 +33,7 @@ func (t *TableManager) timeProcessor() {
 				bs.WriteString(v)
 				bs.WriteRune('\n')
 			}
-			log.Debugf("-----------------------------\n%s info %s", name,bs.String())
+			log.Debugf("-----------------------------\n%s info create:%s\n %s", name, tb.CreateTime.Format(TimeFormat), bs.String())
 		}
 	}
 }

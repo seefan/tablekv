@@ -53,7 +53,7 @@ func (b *Boot) Start() error {
 	b.cnl = &thrift_protocol.Thrift{}
 	log.Debug("Process Manager loaded")
 
-	if err := b.cnl.Start(pm, b.cfg.Host, b.cfg.Port); err != nil {
+	if err := b.cnl.Start(pm, b.cfg.Host, b.cfg.Port,b.cfg.Timeout); err != nil {
 		return err
 	}
 	return nil
