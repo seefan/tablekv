@@ -11,20 +11,13 @@ import (
 	"sync"
 )
 
-const (
-	INVALID_TMESSAGE_TYPE  = 0
-	CALL                   = 1
-	REPLY                  = 2
-	EXCEPTION              = 3
-	ONEWAY                 = 4
-	MULTIPLEXED_SEPARATOR=":"
-)
+
 
 type MultiplexedProcessor struct {
 	thrift.TMultiplexedProcessor
 	serviceProcessorMap map[string]thrift.TProcessor
-	processorManager common.GetProcessor
-	lock sync.Mutex
+	processorManager    common.GetProcessor
+	lock                sync.Mutex
 }
 
 func (t *MultiplexedProcessor) Process(ctx context.Context, in, out thrift.TProtocol) (bool, thrift.TException) {
@@ -32,28 +25,33 @@ func (t *MultiplexedProcessor) Process(ctx context.Context, in, out thrift.TProt
 	if err != nil {
 		return false, err
 	}
-	if typeId != CALL && typeId != ONEWAY {
+	if typeId != thrift.CALL && typeId != thrift.ONEWAY {
 		return false, fmt.Errorf("Unexpected message type %v", typeId)
 	}
 	//extract the service name
-	v := strings.SplitN(name, MULTIPLEXED_SEPARATOR, 2)
-	if len(v) != 2 {
-		return false, fmt.Errorf("Table name not found in message name: %s.  Did you forget to use a TMultiplexProtocol in your client?", name)
+	var tableName, methodName string
+	v := strings.SplitN(name, thrift.MULTIPLEXED_SEPARATOR, 2)
+	if len(v) == 2 {
+		tableName = v[0]
+		methodName = v[1]
+	} else {
+		tableName = "default"
+		methodName = name
 	}
-	actualProcessor, ok := t.serviceProcessorMap[v[0]]
+	actualProcessor, ok := t.serviceProcessorMap[tableName]
 	if !ok {
 		t.lock.Lock()
-		tp,err:=t.processorManager.GetProcessor(v[0])
-		if err!=nil{
-			return false,goerr.New("Table name not found")
+		tp, err := t.processorManager.GetProcessor(tableName)
+		if err != nil {
+			return false, goerr.New("Table name not found")
 		}
 		actualProcessor = NewTableKVProcessor(&ThriftProcessor{
-			p:tp,
+			p: tp,
 		})
-		t.serviceProcessorMap[v[0]]=actualProcessor
+		t.serviceProcessorMap[tableName] = actualProcessor
 		t.lock.Unlock()
 	}
 
-	smb := thrift.NewStoredMessageProtocol(in, v[1], typeId, seqid)
-	return actualProcessor.Process(ctx,smb, out)
+	smb := thrift.NewStoredMessageProtocol(in, methodName, typeId, seqid)
+	return actualProcessor.Process(ctx, smb, out)
 }

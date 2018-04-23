@@ -31,7 +31,7 @@ func (t *TablePool) Start() error {
 			name: t.tableName,
 		}
 	}
-	return t.Start()
+	return t.pool.Start()
 }
 func (t *TablePool) Close() {
 	t.pool.Close()

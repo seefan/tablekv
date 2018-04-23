@@ -47,6 +47,7 @@ func (t *TableManager) GetTable(name string) (table *Table, err error) {
 	t.lock.Lock()
 	defer t.lock.Unlock()
 	table, ok := t.tableMap[name]
+
 	if !ok {
 		if table, err = LoadTable(t.path, TableInfo{
 			Name:       name,

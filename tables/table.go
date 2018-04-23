@@ -9,6 +9,7 @@ import (
 	"github.com/syndtr/goleveldb/leveldb/util"
 	"github.com/syndtr/goleveldb/leveldb/opt"
 	"github.com/seefan/tablekv/common"
+	"github.com/syndtr/goleveldb/leveldb/errors"
 )
 
 type Table struct {
@@ -29,11 +30,13 @@ func LoadTable(p string, info TableInfo) (t *Table, err error) {
 		TableInfo: info,
 	}
 	if t.db, err = leveldb.OpenFile(t.path, &opt.Options{
-		WriteBuffer:         common.WriteBuffer * opt.MiB, //write buffer is important.
-		BlockCacheCapacity:  common.BlockBuffer * opt.MiB,
-		BlockSize:           2 * opt.DefaultBlockSize,
-		CompactionTableSize: 16 * opt.DefaultCompactionTableSize,
-		CompactionTotalSize: 16 * opt.DefaultCompactionTotalSize,
+		WriteBuffer:            common.WriteBuffer * opt.MiB, //write buffer is important.
+		BlockCacheCapacity:     common.BlockBuffer * opt.MiB,
+		BlockSize:              2 * opt.DefaultBlockSize,
+		CompactionTableSize:    16 * opt.DefaultCompactionTableSize,
+		CompactionTotalSize:    16 * opt.DefaultCompactionTotalSize,
+		WriteL0PauseTrigger:    64,
+		WriteL0SlowdownTrigger: 32,
 	}); err == nil {
 		t.isOpen = true
 		t.TableInfo = info
@@ -62,7 +65,11 @@ func (t *Table) Get(key []byte) ([]byte, error) {
 	if !t.isOpen {
 		return nil, goerr.New("db is not open")
 	}
-	return t.db.Get(key, nil)
+	bs, err := t.db.Get(key, nil)
+	if err != nil && err == errors.ErrNotFound {
+		err = nil
+	}
+	return bs, err
 }
 
 //set key and value
