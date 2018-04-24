@@ -178,6 +178,5 @@ func (t *Table) Info() map[string]string {
 	} else {
 		re["leveldb.stats"] = "not open"
 	}
-
 	return re
 }

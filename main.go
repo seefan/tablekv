@@ -64,7 +64,7 @@ func start(cfg *common.Config, b *boot.Boot) {
 	seelog.Debug("config loaded", cfg.ToString())
 	sig := make(chan os.Signal, 1)
 	signal.Notify(sig, syscall.SIGINT, syscall.SIGTERM, syscall.SIGUSR1)
-	seelog.Info("TableKV is starting")
+	seelog.Infof("TableKV is starting on %s:%d", cfg.Host, cfg.Port)
 	go func() {
 		if err := b.Start(); err != nil {
 			seelog.Info("TableKV startup error", err)

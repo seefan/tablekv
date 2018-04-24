@@ -7,6 +7,7 @@ import (
 	"os"
 	"github.com/seefan/tablekv/common"
 	"time"
+	"fmt"
 )
 
 const (
@@ -103,6 +104,16 @@ func NewTableManager(cfg *common.Config, tables []*TableInfo) (t *TableManager) 
 	}
 	if cfg.ExpiredType > 0 {
 		go t.timeProcessor()
+	}
+	if cfg.AllowManager {
+		go func() {
+			s := &TableServer{
+				tm: t,
+			}
+			if err := s.Start(cfg.HttpHost, cfg.HttpPort); err != nil {
+				fmt.Println(err.Error())
+			}
+		}()
 	}
 	if tables == nil {
 		return

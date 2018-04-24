@@ -26,7 +26,10 @@ type Config struct {
 	//Write buffer in Mbs,default is 64mb
 	WriteBuffer int
 	//Block buffer in Mbs,default is 64mb
-	BlockBuffer int
+	BlockBuffer  int
+	AllowManager bool
+	HttpHost     string
+	HttpPort     int
 }
 
 //load config and set default value
@@ -43,6 +46,9 @@ func (c *Config) Load(f *ini.File) {
 	c.ExpiredType = f.Section("main").Key("expired_type").MustInt(0)
 	c.WriteBuffer = f.Section("main").Key("write_buffer").MustInt(64)
 	c.BlockBuffer = f.Section("main").Key("block_buffer").MustInt(64)
+	c.AllowManager = f.Section("main").Key("allow_mamager").MustBool(true)
+	c.HttpHost = f.Section("http").Key("host").MustString(c.Host)
+	c.HttpPort = f.Section("http").Key("port").MustInt(8080)
 }
 
 //config value to string
