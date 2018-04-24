@@ -36,6 +36,8 @@ func (t *TableServer) Start(host string, port int) error {
 					t.runFrom(cmd, bw)
 				case "next":
 					t.runNext(cmd, bw)
+				case "get":
+					t.runGet(cmd, bw)
 				default:
 					w.Write([]byte(BadCommand))
 				}
@@ -130,5 +132,20 @@ func (t *TableServer) runShowTables(w *bufio.Writer) {
 	for k := range t.tm.tableMap {
 		w.WriteString(k)
 		w.WriteRune('\n')
+	}
+}
+func (t *TableServer) runGet(cmd []string, w *bufio.Writer) {
+	if len(cmd) != 3 {
+		badCommand(w)
+	} else {
+		if tb, err := t.tm.GetTable(cmd[1]); err != nil {
+			w.WriteString(err.Error())
+		} else {
+			if v, err := tb.Get([]byte(cmd[2])); err != nil {
+				w.WriteString(err.Error())
+			} else {
+				w.Write(v)
+			}
+		}
 	}
 }
